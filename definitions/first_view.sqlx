@@ -11,4 +11,5 @@ config {
   -- Config blocks allow you to configure, document, and test your data assets.
   -- The rest of a SQLX file contains your SELECT statement used to create the table.
 SELECT
-  1 AS test
+  1 AS test,
+  2 AS test_1
