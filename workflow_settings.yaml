@@ -1,0 +1,4 @@
+defaultProject: aman-jarir-uat
+defaultDataset: Production_Tables
+defaultAssertionDataset: dataform_assertions
+dataformCoreVersion: 3.0.52
