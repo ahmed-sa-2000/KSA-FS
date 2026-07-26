@@ -1,0 +1,95 @@
+config {
+    type: "table",
+
+    // 1. Partitioning configuration
+    // partitionBy: "DATE(order_date)",
+
+    // 2. Clustering configuration (up to 4 columns)
+    //clusterBy: ["customer_id", "status"],
+
+    dependencies: [
+    "assert_ext_DealersStores_not_empty",
+    "assert_ext_Dealers_not_empty"
+  ]
+}
+
+post_operations {
+  UPDATE `aman-jarir-uat.aman_test.etl_watermarks`
+  SET stg_processed = TRUE
+  WHERE table_name = 'Dealers'
+}
+
+WITH
+dealers AS (
+  SELECT
+    id AS dealer_id,
+    Name AS d_name,
+    IsActive AS d_active,
+    ReturnPolicy AS d_return_policy,
+    InterestRate AS d_interest_rate,
+    Refundable AS d_refundable,
+    Phone AS d_phone,
+    Visible AS d_visible
+  FROM
+    ${ref("ext_Dealers")} ),
+dealer_stores AS (
+  SELECT
+    id AS ds_id,
+    StoreCode AS ds_store_code,
+    Name AS ds_name,
+    DealerId AS dealer_id,
+    Active AS ds_active,
+    RecapPolicy AS ds_return_policy,
+    InterestRate AS ds_interest_rate,
+    District AS ds_district,
+    Country AS ds_country,
+    CreatedBy AS ds_created_by,
+    CreatedDate AS ds_created_date,
+    LastModifiedBy AS ds_modified_by,
+    LastModifiedDate AS ds_modified_date
+  FROM
+    ${ref("ext_DealersStores")} ),
+stg_cte as (
+  SELECT
+    ds.ds_id,
+    ds.ds_store_code,
+    d.dealer_id AS ds_dealer_id,
+    -- Dealer Fields
+    d.d_name,
+    d.d_active,
+    d.d_return_policy,
+    d.d_interest_rate,
+    d.d_refundable,
+    d.d_phone,
+    d.d_visible,
+    -- Store Fields
+    ds.ds_name,
+    ds.ds_active,
+    ds.ds_return_policy,
+    ds.ds_interest_rate,
+    ds.ds_district,
+    ds.ds_country,
+    ds.ds_created_by,
+    ds.ds_modified_by,
+    ds.ds_created_date,
+    ds.ds_modified_date
+  FROM
+    dealer_stores ds
+  LEFT JOIN
+    dealers d
+  ON
+    d.dealer_id = ds.dealer_id
+)
+SELECT
+  s.*,
+  MD5(
+    TO_JSON_STRING(
+      (SELECT p FROM (SELECT s.* EXCEPT(ds_id)) AS p)
+    )
+  ) as hashkey,
+  CURRENT_DATETIME() AS etl_timestamp
+FROM stg_cte s
+
+
+
+

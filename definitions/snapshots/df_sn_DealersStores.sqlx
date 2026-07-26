@@ -1,0 +1,52 @@
+config {
+  type: "incremental",
+  uniqueKey: ["ds_id", "hashkey"]
+}
+
+-- 1. PRE-OPERATION: Expire active records in the target table whose hashkey changed in the incoming source
+pre_operations {
+  ${when(incremental(), 
+    `
+    UPDATE ${self()} t
+    SET
+      valid_to = s.etl_timestamp
+    FROM ${ref('df_dim_DealersStores')} s
+    WHERE s.ds_id = t.ds_id
+      AND s.hashkey != t.hashkey
+      AND t.is_current = TRUE
+    `
+  )}
+}
+
+-- 2. POST-OPERATION: Set is_current = FALSE for expired records
+post_operations {
+  ${when(incremental(), 
+    `
+    UPDATE ${self()}
+    SET
+      is_current = FALSE
+    WHERE is_current = TRUE
+      AND valid_to IS NOT NULL
+    `
+  )}
+}
+
+-- 3. MAIN QUERY: Insert new or updated records
+SELECT
+  s.* EXCEPT(etl_timestamp),
+  s.etl_timestamp AS valid_from,
+  SAFE_CAST(NULL AS DATETIME) AS valid_to,
+  TRUE AS is_current
+FROM ${ref('df_dim_DealersStores')} s
+
+${when(incremental(), 
+  `
+  WHERE s.ds_id NOT IN (
+    SELECT ds_id FROM ${self()} WHERE is_current = TRUE
+  )
+  OR s.hashkey NOT IN (
+    SELECT hashkey FROM ${self()} WHERE ds_id = s.ds_id AND is_current = TRUE
+  )
+  `
+)}
+
