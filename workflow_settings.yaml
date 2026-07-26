@@ -1,4 +1,4 @@
 defaultProject: aman-jarir-uat
-defaultDataset: Production_Tables
-defaultAssertionDataset: dataform_assertions
+defaultDataset: Staging_Tables
+defaultAssertionDataset: Staging_Tables
 dataformCoreVersion: 3.0.52
