@@ -1,0 +1,77 @@
+config {
+    type: "table",
+
+    dependencies: [
+        'assert_ext_AdminRequests_not_empty',
+        'assert_ext_RequestStatuses_not_empty',
+        'assert_ext_RequestType_not_empty'
+    ]
+
+    /*
+      uniqueKey: ["app_id"]
+    */
+}
+
+pre_operations {
+  UPDATE `aman-jarir-uat.aman_test.etl_watermarks`
+  SET stg_processed = FALSE
+  WHERE table_name IN ('AdminRequests', 'requesttype', 'RequestStatuses')
+}
+
+post_operations {
+  UPDATE `aman-jarir-uat.aman_test.etl_watermarks`
+  SET stg_processed = TRUE,
+      updated_at = CURRENT_TIMESTAMP()
+  WHERE table_name IN ('AdminRequests', 'requesttype', 'RequestStatuses')
+}
+
+WITH admin_requests_cte as (
+  SELECT 
+      Id as request_id,
+      RequestType as request_type_id,
+      StatusId as request_status_id,
+      RejectionReason as rejection_reason,
+      Notes as notes,
+      CreatedBy as created_by,
+      LastModifiedBy as modified_by,
+      CreatedDate as created_date,
+      LastModifiedDate as modified_date
+  FROM ${ref('ext_AdminRequests')}
+),
+request_type_cte as (
+  SELECT 
+      Id as request_type_id,
+      name as request_type_name
+  FROM ${ref('ext_RequestType')}
+),
+request_status_cte as (
+  SELECT 
+      Id as request_status_id,
+      Name as request_status_name
+  FROM ${ref('ext_RequestStatuses')}
+)
+SELECT
+  arc.request_id,
+  rtc.request_type_name as request_type,
+  rsc.request_status_name as requst_status,
+  arc.rejection_reason,
+  arc.notes,
+  arc.created_by,
+  arc.modified_by,
+  arc.created_date,
+  arc.modified_date,
+  CURRENT_DATETIME() AS etl_timestamp
+FROM admin_requests_cte arc
+    LEFT JOIN request_type_cte rtc ON arc.request_type_id = rtc.request_type_id
+    LEFT JOIN request_status_cte rsc ON rsc.request_status_id = arc.request_status_id
+
+/*
+${when(incremental(), 
+  `
+  WHERE COALESCE(arc.modified_date, arc.created_date) >= (select MAX(GREATEST(created_date, modified_date)) from ${self()})
+  `
+)}
+*/
+
+
+

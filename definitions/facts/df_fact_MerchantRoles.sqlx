@@ -1,0 +1,71 @@
+config {
+    type: "table",
+    dependencies: [
+        'assert_ext_MerchantRoles_not_empty'
+    ]
+
+    // uniqueKey: ["id"]
+}
+
+pre_operations {
+  UPDATE `aman-jarir-uat.aman_test.etl_watermarks`
+  SET stg_processed = FALSE
+  WHERE table_name IN ('MerchantRoles')
+}
+
+post_operations {
+  UPDATE `aman-jarir-uat.aman_test.etl_watermarks`
+  SET stg_processed = TRUE,
+      updated_at = CURRENT_TIMESTAMP()
+  WHERE table_name IN ('MerchantRoles')
+}
+
+WITH merchant_roles_stg AS (
+    select 
+        id,
+        MerchantId as merchant_id,
+        RoleId as role_id,
+        IsActive as is_active,
+        CreatedBy as created_by,
+        LastModifiedBy as modified_by,
+        CreatedDate as created_date,
+        LastModifiedDate as modified_date
+    FROM ${ref('ext_MerchantRoles')}
+),
+merchants_stg AS (
+    SELECT merchant_id, store_code
+    FROM ${ref('df_dim_MerchantUsers')}
+),
+dealers_stores_stg AS (
+    SELECT ds_id, ds_store_code
+    FROM ${ref('df_dim_DealersStores')}
+)
+SELECT 
+    mrs.id,
+    mrs.merchant_id,
+    dss.ds_id AS store_id,
+    mrs.role_id,
+    mrs.is_active,
+    mrs.created_by,
+    mrs.modified_by,
+    mrs.created_date,
+    mrs.modified_date,
+    CURRENT_DATETIME() AS etl_timestamp
+FROM merchant_roles_stg mrs
+    LEFT JOIN merchants_stg ms ON ms.merchant_id = mrs.merchant_id
+    LEFT JOIN dealers_stores_stg dss ON dss.ds_store_code = ms.store_code
+
+/*
+${when(incremental(), 
+  `
+  WHERE COALESCE(mrs.modified_date, mrs.created_date) >= (select MAX(GREATEST(created_date, modified_date)) from ${self()})
+  `
+)}
+*/
+
+
+
+
+
+
+

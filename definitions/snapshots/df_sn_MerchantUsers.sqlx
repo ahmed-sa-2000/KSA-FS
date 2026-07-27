@@ -1,8 +1,9 @@
 config {
   type: "incremental",
-  uniqueKey: ["ds_id", "hashkey"],
+  uniqueKey: ["merchant_id", "hashkey"],
   disabled: true
 }
+
 
 -- 1. PRE-OPERATION: Expire active records in the target table whose hashkey changed in the incoming source
 pre_operations {
@@ -11,8 +12,8 @@ pre_operations {
     UPDATE ${self()} t
     SET
       valid_to = s.etl_timestamp
-    FROM ${ref('df_dim_DealersStores')} s
-    WHERE s.ds_id = t.ds_id
+    FROM ${ref('df_dim_MerchantUsers')} s
+    WHERE s.merchant_id = t.merchant_id
       AND s.hashkey != t.hashkey
       AND t.is_current = TRUE
     `
@@ -32,22 +33,26 @@ post_operations {
   )}
 }
 
+
 -- 3. MAIN QUERY: Insert new or updated records
 SELECT
   s.* EXCEPT(etl_timestamp),
   s.etl_timestamp AS valid_from,
   SAFE_CAST(NULL AS DATETIME) AS valid_to,
   TRUE AS is_current
-FROM ${ref('df_dim_DealersStores')} s
+FROM ${ref('df_dim_MerchantUsers')} s
 
 ${when(incremental(), 
   `
-  WHERE s.ds_id NOT IN (
-    SELECT ds_id FROM ${self()} WHERE is_current = TRUE
+  WHERE s.merchant_id NOT IN (
+    SELECT merchant_id FROM ${self()} WHERE is_current = TRUE
   )
   OR s.hashkey NOT IN (
-    SELECT hashkey FROM ${self()} WHERE ds_id = s.ds_id AND is_current = TRUE
+    SELECT hashkey FROM ${self()} WHERE merchant_id = s.merchant_id AND is_current = TRUE
   )
   `
 )}
+
+
+
 

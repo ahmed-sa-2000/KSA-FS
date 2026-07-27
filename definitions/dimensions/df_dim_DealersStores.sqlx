@@ -7,16 +7,26 @@ config {
     // 2. Clustering configuration (up to 4 columns)
     //clusterBy: ["customer_id", "status"],
 
+    /*
+      // uniqueKey: ["ds_id"]
+    */
     dependencies: [
     "assert_ext_DealersStores_not_empty",
     "assert_ext_Dealers_not_empty"
   ]
 }
 
+pre_operations {
+  UPDATE `aman-jarir-uat.aman_test.etl_watermarks`
+  SET stg_processed = FALSE
+  WHERE table_name IN ('Dealers', 'DealersStores')
+}
+
 post_operations {
   UPDATE `aman-jarir-uat.aman_test.etl_watermarks`
-  SET stg_processed = TRUE
-  WHERE table_name = 'Dealers'
+  SET stg_processed = TRUE,
+      updated_at = CURRENT_TIMESTAMP()
+  WHERE table_name IN ('Dealers', 'DealersStores')
 }
 
 WITH
@@ -90,6 +100,12 @@ SELECT
   CURRENT_DATETIME() AS etl_timestamp
 FROM stg_cte s
 
-
+/*
+${when(incremental(), 
+  `
+  WHERE COALESCE(s.ds_modified_date, s.ds_created_date) >= (select MAX(GREATEST(ds_created_date, ds_modified_date)) from ${self()})
+  `
+)}
+*/
 
 

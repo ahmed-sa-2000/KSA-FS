@@ -10,7 +10,9 @@ const sources = [
   "ext_AdminRequests",
   "ext_DealerReconciliations",
   "ext_Roles",
-  "ext_MerchantApplications"
+  "ext_MerchantApplications",
+  "ext_MerchantApplicationStatus",
+  "ext_RequestType"
 ];
 
 sources

@@ -1,0 +1,82 @@
+config {
+    type: "table",
+
+    dependencies: [
+      'assert_ext_MerchantApplications_not_empty',
+      'assert_ext_MerchantApplicationStatus_not_empty'
+    ]
+
+    /*
+      uniqueKey: ["app_id"]
+    */
+}
+
+pre_operations {
+  UPDATE `aman-jarir-uat.aman_test.etl_watermarks`
+  SET stg_processed = FALSE
+  WHERE table_name IN ('MerchantApplications', 'merchantapplicationstatus')
+}
+
+post_operations {
+  UPDATE `aman-jarir-uat.aman_test.etl_watermarks`
+  SET stg_processed = TRUE,
+      updated_at = CURRENT_TIMESTAMP()
+  WHERE table_name IN ('MerchantApplications', 'merchantapplicationstatus')
+}
+
+WITH merchant_app_stg AS (
+    select 
+        Id as app_id,
+        Name as name,
+        Status as status_id,
+        Phone as phone,
+        Email as email,
+        Location as location,
+        Website as website,
+        ReturnPolicy as return_policy,
+        Refundable as refundable,
+        CreatedBy as created_by,
+        LastModifiedBy as modified_by,
+        CreatedDate as created_date,
+        LastModifiedDate as modified_date
+    from ${ref('ext_MerchantApplications')}
+),
+app_statuses AS (
+    SELECT 
+        id as status_id,
+        name as status_name,
+    FROM ${ref('ext_MerchantApplicationStatus')}
+)
+SELECT 
+    mas.app_id,
+    mas.name,
+    aps.status_name as status,
+    mas.phone,
+    mas.email,
+    mas.location,
+    mas.website,
+    mas.return_policy,
+    mas.refundable,
+    mas.created_by,
+    mas.modified_by,
+    mas.created_date,
+    mas.modified_date,
+    CURRENT_DATETIME() AS etl_timestamp
+FROM merchant_app_stg mas
+    LEFT JOIN app_statuses aps ON aps.status_id = mas.status_id
+
+
+/*
+${when(incremental(), 
+  `
+  WHERE COALESCE(mas.modified_date, mas.created_date) >= (select MAX(GREATEST(created_date, modified_date)) from ${self()})
+  `
+)}
+*/
+
+
+
+
+
+
+

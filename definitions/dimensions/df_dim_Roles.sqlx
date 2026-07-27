@@ -1,0 +1,30 @@
+config {
+    type: "table",
+
+    dependencies: [
+    "assert_ext_Roles_not_empty",
+  ]
+}
+
+pre_operations {
+  UPDATE `aman-jarir-uat.aman_test.etl_watermarks`
+  SET stg_processed = FALSE
+  WHERE table_name IN ('Roles')
+}
+
+post_operations {
+  UPDATE `aman-jarir-uat.aman_test.etl_watermarks`
+  SET stg_processed = TRUE,
+      updated_at = CURRENT_TIMESTAMP()
+  WHERE table_name IN ('Roles')
+}
+
+select 
+  id as role_id,
+  Name as role_name,
+  CreatedBy as created_by,
+  LastModifiedBy as modified_by,
+  CreatedDate as created_date,
+  LastModifiedDate as modified_date,
+  CURRENT_DATETIME() AS etl_timestamp
+from ${ref('ext_Roles')}

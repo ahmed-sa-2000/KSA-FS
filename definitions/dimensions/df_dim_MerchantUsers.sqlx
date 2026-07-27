@@ -1,0 +1,59 @@
+config {
+    type: "table",
+
+    /*
+      uniqueKey: ["merchant_id"]
+    */
+
+    dependencies: [
+    "assert_ext_Users_not_empty"
+  ]
+}
+
+pre_operations {
+  UPDATE `aman-jarir-uat.aman_test.etl_watermarks`
+  SET stg_processed = FALSE
+  WHERE table_name IN ('Users')
+}
+
+post_operations {
+  UPDATE `aman-jarir-uat.aman_test.etl_watermarks`
+  SET stg_processed = TRUE,
+      updated_at = CURRENT_TIMESTAMP()
+  WHERE table_name IN ('Users')
+}
+
+with stg_cte as (
+  select
+    id as merchant_id,
+    StoreCode as store_code,
+    UserName as username,
+    Email as email,
+    IsActive as is_active,
+    IsSuperMerchant as is_super_merchant,
+    SkipApproval as skip_approval,
+    CreatedBy as created_by,
+    LastModifiedBy as modified_by,
+    CreatedDate as created_date,
+    LastModifiedDate as modified_date
+  from ${ref('ext_Users')}
+)
+
+SELECT 
+    s.*,
+    MD5(
+    TO_JSON_STRING(
+      (SELECT p FROM (SELECT s.* EXCEPT(merchant_id)) AS p)
+    )
+  ) as hashkey,
+  CURRENT_DATETIME() AS etl_timestamp
+FROM stg_cte s
+
+/*
+${when(incremental(), 
+  `
+  WHERE COALESCE(s.modified_date, s.created_date) >= (select MAX(GREATEST(created_date, modified_date)) from ${self()})
+  `
+)}
+*/
+
