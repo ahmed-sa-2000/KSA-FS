@@ -11,16 +11,17 @@ config {
 }
 
 pre_operations {
-  UPDATE `aman-jarir-uat.aman_test.etl_watermarks`
-  SET stg_processed = FALSE
-  WHERE table_name IN ('Users')
+  CALL `aman-jarir-uat.aman_test.update_watermark_with_retry`(
+      ['Users'],
+      FALSE
+    )
 }
 
 post_operations {
-  UPDATE `aman-jarir-uat.aman_test.etl_watermarks`
-  SET stg_processed = TRUE,
-      updated_at = CURRENT_TIMESTAMP()
-  WHERE table_name IN ('Users')
+  CALL `aman-jarir-uat.aman_test.update_watermark_with_retry`(
+      ['Users'],
+      TRUE
+    )
 }
 
 with stg_cte as (
