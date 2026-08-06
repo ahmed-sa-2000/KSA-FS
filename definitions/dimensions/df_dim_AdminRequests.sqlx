@@ -66,6 +66,7 @@ FROM admin_requests_cte arc
     LEFT JOIN request_type_cte rtc ON arc.request_type_id = rtc.request_type_id
     LEFT JOIN request_status_cte rsc ON rsc.request_status_id = arc.request_status_id
 
+
 /*
 ${when(incremental(), 
   `
@@ -73,6 +74,7 @@ ${when(incremental(),
   `
 )}
 */
+
 
 
 
