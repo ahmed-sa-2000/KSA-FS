@@ -1,0 +1,68 @@
+config {
+    type: "table",
+
+    dependencies: [
+      'df_lookup_InstallmentRequestStatus',
+      'assert_ext_InstallmentRequests_not_empty'
+    ]
+}
+
+pre_operations {
+  CALL `aman-jarir-uat.aman_test.update_watermark_with_retry`(
+      ['Installments'],
+      FALSE
+    )
+}
+
+post_operations {
+  CALL `aman-jarir-uat.aman_test.update_watermark_with_retry`(
+      ['Installments'],
+      TRUE
+    )
+}
+
+WITH stg_installment_request_status AS (
+    SELECT *
+    FROM ${ref('df_lookup_InstallmentRequestStatus')}
+),
+stg_installment_requests AS (
+    select 
+        Id as installmet_request_id,
+        ProgramId as program_id,
+        SourceId as source_id,
+        CustomerId as customer_id,
+        CustomerMobile as customer_mobile,
+        NationalId as national_id,
+        DBR as dbr,
+        ApprovedAmount as approved_amount,
+        Balance as balance,
+        Status as installment_status_id,
+        CreatedBy as created_by,
+        LastModifiedBy as modified_by,
+        CreatedDate as created_date,
+        LastModifiedDate as modified_date,
+        row_timestamp
+    from ${ref('ext_InstallmentRequests')}
+)
+SELECT 
+    sir.installmet_request_id,
+    sir.program_id,
+    sir.source_id,
+    sir.customer_id,
+    sir.customer_mobile,
+    sir.national_id,
+    sir.dbr,
+    sir.approved_amount,
+    sir.balance,
+    sirs.installment_status_name,
+    sir.created_by,
+    sir.modified_by,
+    sir.created_date,
+    sir.modified_date,
+    sir.row_timestamp
+FROM stg_installment_requests sir 
+        LEFT JOIN stg_installment_request_status sirs ON sirs.installment_status_id = sir.installment_status_id
+
+
+
+

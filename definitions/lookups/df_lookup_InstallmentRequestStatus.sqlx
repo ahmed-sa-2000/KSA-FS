@@ -1,0 +1,55 @@
+config {
+    type: "table",
+
+    dependencies: [
+      'assert_ext_InstallmentRequestStatus_not_empty'
+    ]
+}
+
+
+
+pre_operations {
+  CALL `aman-jarir-uat.aman_test.update_watermark_with_retry`(
+      ['InstallmentStatus'],
+      FALSE
+    )
+}
+
+post_operations {
+  CALL `aman-jarir-uat.aman_test.update_watermark_with_retry`(
+      ['InstallmentStatus'],
+      TRUE
+    )
+}
+
+
+with ranked_status as (
+select 
+  Id as installment_status_id,
+  Status as installment_status_name,
+  ROW_NUMBER() OVER (PARTITION BY Status ORDER BY row_timestamp DESC) AS rnk
+from ${ref('ext_InstallmentRequestStatus')}
+)
+SELECT 
+  installment_status_id,
+  installment_status_name,
+  CURRENT_DATETIME() AS etl_timestamp
+FROM ranked_status
+WHERE rnk = 1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
