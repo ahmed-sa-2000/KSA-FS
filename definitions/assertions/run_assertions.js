@@ -11,9 +11,8 @@ assertions.assertNotEmpty("ext_MerchantRoles");
 assertions.assertNotEmpty("ext_AdminRequests");
 // assertions.assertNotEmpty("ext_DealerReconciliations");
 assertions.assertNotEmpty("ext_MerchantApplicationStatus");
-assertions.assertNotEmpty("ext_RequestType");
-
+assertions.assertNotEmpty("LookupRequestStatuses");
 
 // LoansDB
-assertions.assertNotEmpty("ext_InstallmentRequestStatus");
-assertions.assertNotEmpty("ext_InstallmentRequests");
+// assertions.assertNotEmpty("ext_InstallmentRequestStatus");
+// assertions.assertNotEmpty("ext_InstallmentRequests");

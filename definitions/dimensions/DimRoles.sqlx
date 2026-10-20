@@ -1,0 +1,35 @@
+config {
+    type: "table",
+
+    dependencies: [
+    "assert_ext_Roles_not_empty",
+  ]
+  ,
+    bigquery: {
+        partitionBy:"Date(r_createddate)"
+    }
+}
+
+pre_operations {
+  CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
+      ['Roles'],
+      FALSE
+    )
+}
+
+post_operations {
+  CALL `arifd-datascience-sa.aman_test.update_watermark_with_retry`(
+      ['Roles'],
+      TRUE
+    )
+}
+
+select 
+  id as r_roleid,
+  Name as r_rolename,
+  CreatedBy as r_createdby,
+  LastModifiedBy as r_modifiedby,
+  CreatedDate as r_createddate,
+  LastModifiedDate as r_modifieddate,
+  CURRENT_DATETIME() AS etl_timestamp
+from ${ref('ext_Roles')}

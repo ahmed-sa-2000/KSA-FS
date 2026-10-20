@@ -1,0 +1,55 @@
+config {
+    type: "table",
+
+    /*
+      uniqueKey: ["merchant_id"]
+    */
+
+    dependencies: [
+    "assert_ext_Users_not_empty"
+  ],
+    bigquery: {
+        partitionBy:"Date(mu_createddate)"
+    }
+}
+
+pre_operations {
+  CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
+      ['Users'],
+      FALSE
+    )
+}
+
+post_operations {
+  CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
+      ['Users'],
+      TRUE
+    )
+}
+
+
+  select
+    id as mu_merchantid,
+    StoreCode as mu_storecode,
+    UserName as mu_username,
+    Email as mu_email,
+    IsActive as mu_isactive,
+    IsSuperMerchant as mu_issuper_merchant,
+    SkipApproval as mu_skipapproval,
+    CreatedBy as mu_createdby,
+    LastModifiedBy as mu_modifiedby,
+    CreatedDate as mu_createddate,
+    LastModifiedDate as mu_modifieddate ,
+    CURRENT_DATETIME() AS etl_timestamp
+
+  from ${ref('ext_Users')}
+
+
+/*
+${when(incremental(), 
+  `
+  WHERE COALESCE(s.mu_modifieddate, s.mu_createddate) >= (select MAX(GREATEST(mu_createddate, mu_modifieddate)) from ${self()})
+  `
+)}
+*/
+

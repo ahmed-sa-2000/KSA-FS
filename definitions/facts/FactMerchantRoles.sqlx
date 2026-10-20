@@ -1,0 +1,68 @@
+config {
+    type: "table",
+    dependencies: [
+        'assert_ext_MerchantRoles_not_empty'
+    ],
+    bigquery: {
+        partitionBy:"Date(mr_createddate)"
+    }
+
+    // uniqueKey: ["mr_id"]
+}
+
+pre_operations {
+  CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
+      ['MerchantRoles'],
+      FALSE
+    )
+}
+
+post_operations {
+  CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
+      ['MerchantRoles'],
+      TRUE
+    )
+}
+
+WITH merchant_roles_stg AS (
+    select 
+        id as mr_id,
+        MerchantId as mr_merchantid,
+        RoleId as mr_roleid,
+        IsActive as mr_isactive,
+        CreatedBy as mr_createdby,
+        LastModifiedBy as mr_modifiedby,
+        CreatedDate as mr_createddate,
+        LastModifiedDate as mr_modifieddate
+    FROM ${ref('ext_MerchantRoles')}
+),
+merchants_stg AS (
+    SELECT mu_merchantid, mu_storecode
+    FROM ${ref('DimMerchantUsers')}
+),
+dealers_stores_stg AS (
+    SELECT ds_id, ds_store_code
+    FROM ${ref('DimDealersStores')}
+)
+SELECT 
+    mrs.mr_id,
+    mrs.mr_merchantid,
+    dss.ds_id AS mr_storeid,
+    mrs.mr_roleid,
+    mrs.mr_isactive,
+    mrs.mr_createdby,
+    mrs.mr_modifiedby,
+    mrs.mr_createddate,
+    mrs.mr_modifieddate,
+    CURRENT_DATETIME() AS etl_timestamp
+FROM merchant_roles_stg mrs
+    LEFT JOIN merchants_stg ms ON ms.mu_merchantid = mrs.mr_merchantid
+    LEFT JOIN dealers_stores_stg dss ON dss.ds_store_code = ms.mu_storecode
+
+/*
+${when(incremental(), 
+  `
+  WHERE COALESCE(mrs.mr_modifieddate, mrs.mr_createddate) >= (select MAX(GREATEST(mr_createddate, mr_modified_date)) from ${self()})
+  `
+)}
+*/

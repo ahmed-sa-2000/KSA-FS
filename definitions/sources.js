@@ -20,7 +20,6 @@ const merchant_db_sources = [
   "ext_Roles",
   "ext_MerchantApplications",
   "ext_MerchantApplicationStatus",
-  "ext_RequestType"
 ];
 
 const loans_db_sources = [
@@ -50,7 +49,7 @@ allSources
   .filter(Boolean) // Drops any accidental empty strings, nulls, or undefined values
   .forEach((table) => {
     declare({
-      database: "aman-jarir-uat",
+      database: "rifd-datascience-sa",
       schema: "Staging_Tables",
       name: table,
     });

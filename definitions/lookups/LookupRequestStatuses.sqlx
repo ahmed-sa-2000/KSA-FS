@@ -1,0 +1,33 @@
+config {
+    type: "table",
+
+    dependencies: [
+    "assert_ext_RequestStatuses_not_empty",
+  ]
+  ,
+    bigquery: {
+        partitionBy:"Date(mr_createddate)"
+    }
+}
+
+pre_operations {
+  CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
+      ['RequestStatuses'],
+      FALSE
+    )
+}
+
+post_operations {
+  CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
+      ['RequestStatuses'],
+      TRUE
+    )
+}
+
+select 
+  id as rs_request_statuesid,
+  name as rs_requestname,
+  description as rs_description,
+  active as rs_active ,
+  CURRENT_DATETIME() as etl_timestamp
+from ${ref('ext_RequestStatuses')}
