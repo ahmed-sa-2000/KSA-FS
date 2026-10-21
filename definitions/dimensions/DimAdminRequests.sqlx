@@ -7,7 +7,7 @@ config {
     ]
     ,
     bigquery: {
-        partitionBy:"Date(mr_createddate)"
+        partitionBy:"Date(ar_createddate)"
     }
 
     /*

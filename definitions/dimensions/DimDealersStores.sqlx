@@ -90,11 +90,6 @@ stg_cte as (
 )
 SELECT
   s.*,
-  MD5(
-    TO_JSON_STRING(
-      (SELECT p FROM (SELECT s.* EXCEPT(ds_id)) AS p)
-    )
-  ) as hashkey,
   CURRENT_DATETIME() AS etl_timestamp
 FROM stg_cte s
 

@@ -4,10 +4,6 @@ config {
     dependencies: [
     "assert_ext_RequestStatuses_not_empty",
   ]
-  ,
-    bigquery: {
-        partitionBy:"Date(mr_createddate)"
-    }
 }
 
 pre_operations {
