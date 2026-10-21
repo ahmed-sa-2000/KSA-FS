@@ -1,4 +1,4 @@
 defaultProject: rifd-datascience-sa
-defaultDataset: aman_test
-defaultAssertionDataset: aman_test
+defaultDataset: Production_Tables
+defaultAssertionDataset: Production_Tables
 dataformCoreVersion: 3.0.52
