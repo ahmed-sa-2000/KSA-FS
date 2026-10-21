@@ -42,7 +42,7 @@ merchants_stg AS (
     FROM ${ref('DimMerchantUsers')}
 ),
 dealers_stores_stg AS (
-    SELECT ds_id, ds_store_code
+    SELECT ds_id, ds_storecode
     FROM ${ref('DimDealersStores')}
 )
 SELECT 
@@ -59,7 +59,7 @@ SELECT
     CURRENT_DATETIME() AS etl_timestamp
 FROM merchant_roles_stg mrs
     LEFT JOIN merchants_stg ms ON ms.mu_merchantid = mrs.mr_merchantid
-    LEFT JOIN dealers_stores_stg dss ON dss.ds_store_code = ms.mu_storecode
+    LEFT JOIN dealers_stores_stg dss ON dss.ds_storecode = ms.mu_storecode
 
 /*
 ${when(incremental(), 
