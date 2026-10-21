@@ -13,7 +13,7 @@ pre_operations {
 }
 
 post_operations {
-  CALL `arifd-datascience-sa.aman_test.update_watermark_with_retry`(
+  CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
       ['roles'],
       TRUE
     )
