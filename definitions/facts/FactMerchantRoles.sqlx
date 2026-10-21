@@ -4,7 +4,7 @@ config {
         'assert_ext_MerchantRoles_not_empty'
     ],
     bigquery: {
-        partitionBy:"Date(mr_createddate)"
+        clusterBy: ["mr_merchantid", "mr_storeid", "mr_roleid"]
     }
 
     // uniqueKey: ["mr_id"]
