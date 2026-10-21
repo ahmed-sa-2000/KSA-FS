@@ -1,0 +1,37 @@
+config {
+    type: "table",
+
+    dependencies: [
+        "assert_ext_DepositsTypesLookups_not_empty",
+    ]
+}
+
+SELECT
+  id , 
+  name AS type_name,
+  createdBy AS created_by,
+  lastmodifiedby AS modified_by,
+  CreatedDate AS created_date,
+  LastModifiedDate lastmodified_date,
+  CURRENT_DATETIME() AS etl_timestamp
+FROM
+  ${ref('ext_DepositsTypesLookups')}
+  /*
+  ${when(incremental(),
+  `
+  WHERE COALESCE(lastmodified_date, created_date) >= (select MAX(GREATEST(created_date, lastmodified_date)) from ${self()})
+  `
+  )}
+  */
+
+pre_operations {
+  CALL
+    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['DepositsTypesLookups'],
+      FALSE )
+}
+
+post_operations {
+  CALL
+    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['DepositsTypesLookups'],
+      TRUE )
+}

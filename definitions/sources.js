@@ -23,23 +23,14 @@ const merchant_db_sources = [
 ];
 
 const loans_db_sources = [
-  "ext_InstallmentRequests",
-  "ext_InstallmentRequestStatus",
-  "ext_Coupons",
-  "ext_DeliveryCodes",
-  "ext_Deposits",
-  "ext_DepositStatus",
-  "ext_DepositTypes",
-  "ext_InstallmentItems",
-  "ext_InstallmentItemsStatus",
-  "ext_PromotionTypeConfigs",
-  "ext_PromotionTypes",
-  "ext_Purchases",
-  "ext_PurchaseOrders",
-  "ext_PurchaseOrdersStatus",
-  "ext_Claims",
-  "ext_ClaimsStatus",
-  "ext_NotificationTypes"
+    "ext_InstallmentsStatusLookups",
+    "ext_InstallmentsSourcesLookups",
+    "ext_InstallmentsDetailsStatusLookups",
+    "ext_InstallmentItemsStatusLookups",
+    "ext_DepositsStatusLookups",
+    "ext_DepositsTypesLookups",
+    "ext_PromoStageLookups",
+    "ext_PromotionsTypesLookups"
 ];
 
 // Combine both arrays into a single list

@@ -22,7 +22,7 @@ post_operations {
 
 select 
   id as rs_request_statuesid,
-  name as rs_requestname,
+  name as rs_statusname,
   description as rs_description,
   active as rs_active ,
   CURRENT_DATETIME() as etl_timestamp
