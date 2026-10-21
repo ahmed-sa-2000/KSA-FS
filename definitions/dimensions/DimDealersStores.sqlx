@@ -61,7 +61,7 @@ stg_cte as (
   SELECT
     ds.ds_id,
     ds.ds_storecode,
-    d.dealer_id AS ds_dealerid,
+    d.d_dealerid AS ds_dealerid,
     -- Dealer Fields
     d.d_name,
     d.d_active,
@@ -87,7 +87,7 @@ stg_cte as (
   LEFT JOIN
     dealers d
   ON
-    d.dealer_id = ds.dealer_id
+    d.d_dealerid = ds.dealerid
 )
 SELECT
   s.*,
