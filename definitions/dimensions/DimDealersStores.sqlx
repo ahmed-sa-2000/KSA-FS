@@ -6,7 +6,7 @@ config {
     "assert_ext_Dealers_not_empty"
   ],
     bigquery: {
-        partitionBy:"Date(ds_createddate)"
+        clusterBy: ["ds_id", "ds_storecode"]
     }
     /*
       // uniqueKey: ["ds_id"]
@@ -15,14 +15,14 @@ config {
 
 pre_operations {
   CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
-      ['DealersStores', 'Dealers'],
+      ['dealersstores', 'dealers'],
       FALSE
     )
 }
 
 post_operations {
   CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
-      ['DealersStores', 'Dealers'],
+      ['dealersstores', 'dealers'],
       TRUE
     )
 }
@@ -33,8 +33,8 @@ dealers AS (
     id AS d_dealerid,
     Name AS d_name,
     IsActive AS d_active,
-    ReturnPolicy AS d_return_policy,
-    InterestRate AS d_interest_rate,
+    ReturnPolicy AS d_returnpolicy,
+    InterestRate AS d_interestrate,
     Refundable AS d_refundable,
     Phone AS d_phone,
     Visible AS d_visible
@@ -43,12 +43,12 @@ dealers AS (
 dealer_stores AS (
   SELECT
     id AS ds_id,
-    StoreCode AS ds_store_code,
+    StoreCode AS ds_storecode,
     Name AS ds_name,
-    DealerId AS dealer_id,
+    DealerId AS dealerid,
     Active AS ds_active,
-    RecapPolicy AS ds_return_policy,
-    InterestRate AS ds_interest_rate,
+    RecapPolicy AS ds_returnpolicy,
+    InterestRate AS ds_interestrate,
     District AS ds_district,
     Country AS ds_country,
     CreatedBy AS ds_createdby,
@@ -60,27 +60,28 @@ dealer_stores AS (
 stg_cte as (
   SELECT
     ds.ds_id,
-    ds.ds_store_code,
-    d.dealer_id AS ds_dealer_id,
+    ds.ds_storecode,
+    d.dealer_id AS ds_dealerid,
     -- Dealer Fields
     d.d_name,
     d.d_active,
-    d.d_return_policy,
-    d.d_interest_rate,
+    d.d_returnpolicy,
+    d.d_interestrate,
     d.d_refundable,
     d.d_phone,
     d.d_visible,
     -- Store Fields
     ds.ds_name,
     ds.ds_active,
-    ds.ds_return_policy,
-    ds.ds_interest_rate,
+    ds.ds_returnpolicy,
+    ds.ds_interestrate,
     ds.ds_district,
     ds.ds_country,
     ds.ds_createdby,
     ds.ds_modifiedby,
     ds.ds_createddate,
-    ds.ds_modifieddate
+    ds.ds_modifieddate,
+    COALESCE(ds.ds_modifieddate, ds.ds_createddate) as row_timestamp
   FROM
     dealer_stores ds
   LEFT JOIN
@@ -96,7 +97,7 @@ FROM stg_cte s
 /*
 ${when(incremental(), 
   `
-  WHERE COALESCE(s.ds_modifieddate, s.ds_createddate) >= (select MAX(GREATEST(ds_createddate, ds_modifieddate)) from ${self()})
+  WHERE COALESCE(s.ds_modifieddate, s.ds_createddate) >= (select MAX(row_timestamp) from ${self()})
   `
 )}
 */

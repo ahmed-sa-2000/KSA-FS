@@ -1,6 +1,6 @@
 config {
     type: "table",
-
+    schema: "Lookups",
     dependencies: [
     "assert_ext_RequestStatuses_not_empty",
   ]
@@ -8,22 +8,22 @@ config {
 
 pre_operations {
   CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
-      ['RequestStatuses'],
+      ['requeststatuses'],
       FALSE
     )
 }
 
 post_operations {
   CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
-      ['RequestStatuses'],
+      ['requeststatuses'],
       TRUE
     )
 }
 
 select 
-  id as rs_request_statuesid,
-  name as rs_requestname,
-  description as rs_description,
-  active as rs_active ,
+  id,
+  name,
+  description,
+  active,
   CURRENT_DATETIME() as etl_timestamp
 from ${ref('ext_RequestStatuses')}

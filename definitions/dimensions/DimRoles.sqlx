@@ -1,25 +1,20 @@
 config {
     type: "table",
-
     dependencies: [
     "assert_ext_Roles_not_empty",
   ]
-  ,
-    bigquery: {
-        partitionBy:"Date(r_createddate)"
-    }
 }
 
 pre_operations {
   CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
-      ['Roles'],
+      ['roles'],
       FALSE
     )
 }
 
 post_operations {
   CALL `arifd-datascience-sa.aman_test.update_watermark_with_retry`(
-      ['Roles'],
+      ['roles'],
       TRUE
     )
 }

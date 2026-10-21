@@ -12,14 +12,14 @@ config {
 
 pre_operations {
   CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
-      ['MerchantRoles'],
+      ['merchantroles'],
       FALSE
     )
 }
 
 post_operations {
   CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
-      ['MerchantRoles'],
+      ['merchantroles'],
       TRUE
     )
 }
@@ -33,7 +33,8 @@ WITH merchant_roles_stg AS (
         CreatedBy as mr_createdby,
         LastModifiedBy as mr_modifiedby,
         CreatedDate as mr_createddate,
-        LastModifiedDate as mr_modifieddate
+        LastModifiedDate as mr_modifieddate,
+        COALESCE(LastModifiedDate, CreatedDate) as row_timestamp
     FROM ${ref('ext_MerchantRoles')}
 ),
 merchants_stg AS (
@@ -54,6 +55,7 @@ SELECT
     mrs.mr_modifiedby,
     mrs.mr_createddate,
     mrs.mr_modifieddate,
+    mrs.row_timestamp,
     CURRENT_DATETIME() AS etl_timestamp
 FROM merchant_roles_stg mrs
     LEFT JOIN merchants_stg ms ON ms.mu_merchantid = mrs.mr_merchantid
@@ -62,7 +64,7 @@ FROM merchant_roles_stg mrs
 /*
 ${when(incremental(), 
   `
-  WHERE COALESCE(mrs.mr_modifieddate, mrs.mr_createddate) >= (select MAX(GREATEST(mr_createddate, mr_modified_date)) from ${self()})
+  WHERE COALESCE(mrs.mr_modifieddate, mrs.mr_createddate) >= (select MAX(row_timestamp) from ${self()})
   `
 )}
 */
