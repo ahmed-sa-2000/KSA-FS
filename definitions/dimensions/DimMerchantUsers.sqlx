@@ -40,7 +40,7 @@ post_operations {
     LastModifiedBy as mu_modifiedby,
     CreatedDate as mu_createddate,
     LastModifiedDate as mu_modifieddate,
-    COALESCE(s.mu_modifieddate, s.mu_createddate) as row_timestamp,
+    COALESCE(LastModifiedDate, CreatedDate) as row_timestamp,
     CURRENT_DATETIME() AS etl_timestamp
 
   from ${ref('ext_Users')}
