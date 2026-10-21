@@ -8,7 +8,7 @@ config {
 
 SELECT
   id , 
-  name AS status_name,
+  name ,
   createdBy AS created_by,
   lastmodifiedby AS modified_by,
   CreatedDate AS created_date,
@@ -16,13 +16,7 @@ SELECT
   CURRENT_DATETIME() AS etl_timestamp
 FROM
   ${ref('ext_InstallmentsDetailsStatusLookups')}
-  /*
-  ${when(incremental(),
-  `
-  WHERE COALESCE(lastmodified_date, created_date) >= (select MAX(GREATEST(created_date, lastmodified_date)) from ${self()})
-  `
-  )}
-  */
+
 
 pre_operations {
   CALL

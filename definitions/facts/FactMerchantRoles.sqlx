@@ -4,7 +4,7 @@ config {
         'assert_ext_MerchantRoles_not_empty'
     ],
     bigquery: {
-        partitionBy:"Date(mr_createddate)"
+        clusterBy: ["mr_merchantid", "mr_storeid", "mr_roleid"]
     }
 
     // uniqueKey: ["mr_id"]
@@ -12,14 +12,14 @@ config {
 
 pre_operations {
   CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
-      ['MerchantRoles'],
+      ['merchantroles'],
       FALSE
     )
 }
 
 post_operations {
   CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
-      ['MerchantRoles'],
+      ['merchantroles'],
       TRUE
     )
 }
@@ -33,7 +33,8 @@ WITH merchant_roles_stg AS (
         CreatedBy as mr_createdby,
         LastModifiedBy as mr_modifiedby,
         CreatedDate as mr_createddate,
-        LastModifiedDate as mr_modifieddate
+        LastModifiedDate as mr_modifieddate,
+        COALESCE(LastModifiedDate, CreatedDate) as row_timestamp
     FROM ${ref('ext_MerchantRoles')}
 ),
 merchants_stg AS (
@@ -41,7 +42,7 @@ merchants_stg AS (
     FROM ${ref('DimMerchantUsers')}
 ),
 dealers_stores_stg AS (
-    SELECT ds_id, ds_store_code
+    SELECT ds_id, ds_storecode
     FROM ${ref('DimDealersStores')}
 )
 SELECT 
@@ -54,15 +55,16 @@ SELECT
     mrs.mr_modifiedby,
     mrs.mr_createddate,
     mrs.mr_modifieddate,
+    mrs.row_timestamp,
     CURRENT_DATETIME() AS etl_timestamp
 FROM merchant_roles_stg mrs
     LEFT JOIN merchants_stg ms ON ms.mu_merchantid = mrs.mr_merchantid
-    LEFT JOIN dealers_stores_stg dss ON dss.ds_store_code = ms.mu_storecode
+    LEFT JOIN dealers_stores_stg dss ON dss.ds_storecode = ms.mu_storecode
 
 /*
 ${when(incremental(), 
   `
-  WHERE COALESCE(mrs.mr_modifieddate, mrs.mr_createddate) >= (select MAX(GREATEST(mr_createddate, mr_modified_date)) from ${self()})
+  WHERE COALESCE(mrs.mr_modifieddate, mrs.mr_createddate) >= (select MAX(row_timestamp) from ${self()})
   `
 )}
 */

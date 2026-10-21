@@ -30,7 +30,8 @@ const loans_db_sources = [
     "ext_DepositsStatusLookups",
     "ext_DepositsTypesLookups",
     "ext_PromoStageLookups",
-    "ext_PromotionsTypesLookups"
+    "ext_PromotionsTypesLookups",
+    "ext_Installments"
 ];
 
 // Combine both arrays into a single list

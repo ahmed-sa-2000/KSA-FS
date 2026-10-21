@@ -1,0 +1,76 @@
+config {
+    type: "table",
+
+    dependencies: [
+    "assert_LookupInstallmentStatus_not_empty",
+    "assert_LookupInstallmentSources_not_empty"
+  ]
+    /*
+      // uniqueKey: ["i_id"]
+    */
+}
+
+
+WITH installment_stg AS (
+    SELECT
+    id,
+    programid,
+    customerid ,
+    sourceid ,
+    automationid ,
+    neededamount ,
+    approvedamount ,
+    maxdbrcanexist ,
+    flaterate ,
+    maxmonthlyinstallmentcanpaid ,
+    score ,
+    maxtenormonths ,
+    downpaymentpercent,
+    status ,
+    createdby ,
+    createddate ,
+    lastmodifiedby ,
+    lastmodifieddate 
+FROM ${ref('ext_Installments')}
+),
+installment_status_stg AS (
+    SELECT id, name
+    FROM ${ref('LookupInstallmentStatus')}
+),
+installment_sources_stg AS (
+    SELECT id, name
+    FROM ${ref('LookupInstallmentSources')}
+)
+SELECT 
+    i.id AS i_id,
+    i.programid AS i_programid,
+    i.customerid AS i_customerid,
+    i.sourceid AS i_sourceid,
+    isg.name AS i_sourcename,
+    i.automationid AS i_automationid,
+    i.neededamount AS i_neededamount,
+    i.approvedamount AS i_approvedamount,
+    i.maxdbrcanexist AS i_maxdbrcanexist,
+    i.flaterate AS i_flaterate,
+    i.maxmonthlyinstallmentcanpaid AS i_maxmonthly_installmentcanpaid,
+    i.score AS i_score,
+    i.maxtenormonths AS i_maxtenormonths,
+    i.downpaymentpercent AS i_downpaymentpercent,
+    i.status AS i_status,
+    ist.name AS i_statusname,
+    i.createdby AS i_createdby,
+    i.createddate AS i_createddate,
+    i.lastmodifiedby AS i_lastmodifiedby,
+    i.lastmodifieddate AS i_lastmodifieddate,
+    CURRENT_DATETIME() AS etl_timestamp
+FROM installment_stg i
+    LEFT JOIN installment_status_stg ist ON ist.id = i.status
+    LEFT JOIN installment_sources_stg isg  ON isg.id = i.sourceid
+
+/*
+${when(incremental(), 
+  `
+  WHERE COALESCE(i.i_lastmodifieddate, i.i_createddate) >= (select MAX(i_lastmodifieddate, i_createddate) from ${self()})
+  `
+)}
+*/
