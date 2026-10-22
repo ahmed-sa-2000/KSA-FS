@@ -34,7 +34,7 @@ dealers AS (
     Name AS d_name,
     IsActive AS d_active,
     ReturnPolicy AS d_returnpolicy,
-    InterestRate AS d_interestrate,
+    CAST(InterestRate AS FLOAT64) AS d_interestrate,
     Refundable AS d_refundable,
     Phone AS d_phone,
     Visible AS d_visible
@@ -48,13 +48,13 @@ dealer_stores AS (
     DealerId AS dealerid,
     Active AS ds_active,
     RecapPolicy AS ds_returnpolicy,
-    InterestRate AS ds_interestrate,
+    CAST(InterestRate AS FLOAT64) AS ds_interestrate,
     District AS ds_district,
     Country AS ds_country,
     CreatedBy AS ds_createdby,
-    CreatedDate AS ds_createddate,
+    CAST(CreatedDate AS DATETIME) AS ds_createddate,
     LastModifiedBy AS ds_modifiedby,
-    LastModifiedDate AS ds_modifieddate
+    CAST(LastModifiedDate AS DATETIME) AS ds_modifieddate
   FROM
     ${ref("ext_DealersStores")} ),
 stg_cte as (
@@ -101,5 +101,3 @@ ${when(incremental(),
   `
 )}
 */
-
-

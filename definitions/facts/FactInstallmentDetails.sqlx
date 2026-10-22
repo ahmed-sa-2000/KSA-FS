@@ -1,0 +1,64 @@
+config {
+    type: "table",
+    dependencies: [
+        'assert_ext_InstallmentDetails_not_empty',
+        'assert_LookupInstallmentDetailsStatus_not_empty'
+    ],
+   bigquery: {
+        clusterBy: ["ind_installmentid", "ind_merchantid" , "ind_customerid"]
+    }    
+
+    // uniqueKey: ["id"]
+}
+
+
+pre_operations {
+  CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
+      ['InstallmentDetails'],
+      FALSE
+    )
+}
+
+post_operations {
+  CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
+      ['InstallmentDetails'],
+      TRUE
+    )
+}
+
+SELECT
+    d.id AS ind_id,
+    d.installmentid AS ind_installmentid,
+    d.promoid AS ind_promoid,
+    d.purchaseorderid AS ind_poid,
+    d.sourceid AS ind_sourceid,
+    d.customerid AS ind_customerid,
+    d.merchantid AS ind_merchantid,
+    d.branchid AS ind_branchid,
+    CAST(d.adminfees AS BIGNUMERIC) AS ind_adminfees,
+    d.status AS ind_status,
+    l.name AS ind_statusname,
+    d.months AS ind_months,
+    CAST(d.interestrate AS FLOAT64) AS ind_interestrate,
+    CAST(d.monthlypaid AS BIGNUMERIC) AS ind_monthlypaid,
+    CAST(d.installmentamount AS BIGNUMERIC) AS ind_installmentamount,
+    CAST(d.downpayment AS BIGNUMERIC) AS ind_downpayment,
+    CAST(d.totalamount AS BIGNUMERIC) AS ind_totalamount,
+    d.createdby AS ind_createdby,
+    CAST(d.createddate AS DATETIME) AS ind_createddate,
+    d.lastmodifiedby AS ind_modifiedby,
+    CAST(d.lastmodifieddate AS DATETIME) AS ind_lastmodifieddate,
+    CURRENT_DATETIME() AS etl_timestamp
+FROM ${ref('ext_InstallmentDetails')} d
+LEFT JOIN ${ref('LookupInstallmentDetailsStatus')} l
+    ON l.id = d.status
+
+
+
+ 
+/*
+${when(incremental(),
+  `WHERE COALESCE(CAST(d.lastmodifieddate AS DATETIME), CAST(d.createddate AS DATETIME)) >=
+        (SELECT MAX(COALESCE(ind_lastmodifieddate, ind_createddate)) FROM ${self()})`
+)}
+*/

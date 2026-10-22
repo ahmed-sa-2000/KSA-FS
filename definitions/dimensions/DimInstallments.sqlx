@@ -32,6 +32,7 @@ WITH installment_stg AS (
     lastmodifiedby ,
     lastmodifieddate 
 FROM ${ref('ext_Installments')}
+
 ),
 installment_status_stg AS (
     SELECT id, name
@@ -48,29 +49,21 @@ SELECT
     i.sourceid AS i_sourceid,
     isg.name AS i_sourcename,
     i.automationid AS i_automationid,
-    i.neededamount AS i_neededamount,
-    i.approvedamount AS i_approvedamount,
+    CAST(i.neededamount AS BIGNUMERIC) AS i_neededamount,
+    CAST(i.approvedamount AS BIGNUMERIC) AS i_approvedamount,
     i.maxdbrcanexist AS i_maxdbrcanexist,
-    i.flaterate AS i_flaterate,
-    i.maxmonthlyinstallmentcanpaid AS i_maxmonthly_installmentcanpaid,
+    CAST(i.flaterate AS FLOAT64) AS i_flaterate,
+    CAST(i.maxmonthlyinstallmentcanpaid AS BIGNUMERIC) AS i_maxmonthly_installmentcanpaid,
     i.score AS i_score,
     i.maxtenormonths AS i_maxtenormonths,
-    i.downpaymentpercent AS i_downpaymentpercent,
+    CAST(i.downpaymentpercent AS FLOAT64) AS i_downpaymentpercent,
     i.status AS i_status,
     ist.name AS i_statusname,
     i.createdby AS i_createdby,
-    i.createddate AS i_createddate,
+    CAST(i.createddate AS DATETIME) AS i_createddate,
     i.lastmodifiedby AS i_lastmodifiedby,
-    i.lastmodifieddate AS i_lastmodifieddate,
+    CAST(i.lastmodifieddate AS DATETIME) AS i_lastmodifieddate,
     CURRENT_DATETIME() AS etl_timestamp
 FROM installment_stg i
     LEFT JOIN installment_status_stg ist ON ist.id = i.status
     LEFT JOIN installment_sources_stg isg  ON isg.id = i.sourceid
-
-/*
-${when(incremental(), 
-  `
-  WHERE COALESCE(i.i_lastmodifieddate, i.i_createddate) >= (select MAX(i_lastmodifieddate, i_createddate) from ${self()})
-  `
-)}
-*/

@@ -24,7 +24,7 @@ select
   Name as r_rolename,
   CreatedBy as r_createdby,
   LastModifiedBy as r_modifiedby,
-  CreatedDate as r_createddate,
-  LastModifiedDate as r_modifieddate,
+  CAST(CreatedDate AS DATETIME) as r_createddate,
+  CAST(LastModifiedDate AS DATETIME) as r_modifieddate,
   CURRENT_DATETIME() AS etl_timestamp
 from ${ref('ext_Roles')}

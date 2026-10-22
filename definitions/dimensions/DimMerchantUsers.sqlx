@@ -1,7 +1,7 @@
 config {
     type: "table",
     /*
-      uniqueKey: ["merchant_id"]
+      uniqueKey: ["mu_merchantid"]
     */
 
     dependencies: [
@@ -38,9 +38,9 @@ post_operations {
     SkipApproval as mu_skipapproval,
     CreatedBy as mu_createdby,
     LastModifiedBy as mu_modifiedby,
-    CreatedDate as mu_createddate,
-    LastModifiedDate as mu_modifieddate,
-    COALESCE(LastModifiedDate, CreatedDate) as row_timestamp,
+    CAST(CreatedDate AS DATETIME) as mu_createddate,
+    CAST(LastModifiedDate AS DATETIME) as mu_modifieddate,
+    COALESCE(CAST(LastModifiedDate AS DATETIME), CAST(CreatedDate AS DATETIME)) as row_timestamp,
     CURRENT_DATETIME() AS etl_timestamp
 
   from ${ref('ext_Users')}
@@ -49,8 +49,7 @@ post_operations {
 /*
 ${when(incremental(), 
   `
-  WHERE COALESCE(s.mu_modifieddate, s.mu_createddate) >= (select MAX(row_timestamp) from ${self()})
+  WHERE COALESCE(CAST(LastModifiedDate AS DATETIME), CAST(CreatedDate AS DATETIME)) >= (select MAX(row_timestamp) from ${self()})
   `
 )}
 */
-

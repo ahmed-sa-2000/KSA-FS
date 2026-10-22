@@ -1,0 +1,79 @@
+config {
+    type: "table",
+    dependencies: [
+        'assert_ext_Deposits_not_empty',
+        'assert_LookupDepositsTypes_not_empty',
+        'assert_LookupDepositsStatus_not_empty'
+    ],
+    bigquery: {
+        clusterBy: ["d_installmentdetailsid", "d_installmentid"]
+    }
+
+    // uniqueKey: ["id"]
+}
+
+
+pre_operations {
+  CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
+      ['Deposits'],
+      FALSE
+    )
+}
+
+post_operations {
+  CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
+      ['Deposits'],
+      TRUE
+    )
+}
+
+
+SELECT
+    d.id AS d_id,
+    d.installmentid AS d_installmentid,
+    d.installmentdetailsid AS d_installmentdetailsid,
+    d.depositenumber AS d_depositenumber,
+    d.deposittype AS d_deposittype,
+    t.name AS d_deposittype_name,
+    d.paymentmethod AS d_paymentmethod,
+    CAST(d.deposit_gs_interest AS BIGNUMERIC) AS d_deposit_gsinterest,
+    CAST(d.deposit_gs_totalremaining AS BIGNUMERIC) AS d_deposit_gstotalremaining,
+    d.deposit_gs_interestrate AS d_deposit_gsinterestrate,
+    d.isrungs AS d_isrungs,
+    d.deposit_securitization AS d_deposit_securitization,
+    d.status AS d_status,
+    s.name AS d_statusname,
+    CAST(d.collectdate AS DATETIME) AS d_collectdate,
+    d.collectedby AS collected_by,
+    d.month AS month,
+    CAST(d.amount AS BIGNUMERIC) AS d_amount,
+    CAST(d.duedate AS DATETIME) AS d_duedate,
+    d.adminfees AS d_adminfees,
+    d.cumulativeinterest AS d_cumulative_interest,
+    d.cumulativeprincipal AS d_cumulative_principal,
+    d.interestamount AS d_interest_amount,
+    d.monthlypaid AS d_monthlypaid,
+    d.principalamount AS d_principal_amount,
+    d.remainingbalance AS d_remaining_balance,
+    d.remainingtotaldue AS d_remaining_totaldue,
+    d.totalfees AS d_totalfees,
+    d.totalpaidamount AS d_total_paidamount,
+    d.xirrcashflow AS d_xirrcashflow,
+    SAFE_CAST(d.xirrdate AS DATETIME) AS d_xirrdate,
+    d.createdby AS d_createdby,
+    CAST(d.createddate AS DATETIME) AS d_createddate,
+    d.lastmodifiedby AS d_modifiedby,
+    CAST(d.lastmodifieddate AS DATETIME) AS d_lastmodifieddate,
+    CURRENT_DATETIME() AS etl_timestamp
+FROM ${ref('ext_Deposits')} d
+LEFT JOIN ${ref('LookupDepositsTypes')} t
+    ON t.id = d.deposittype
+LEFT JOIN ${ref('LookupDepositsStatus')} s
+    ON s.id = d.status
+
+/*
+${when(incremental(),
+  `WHERE COALESCE(CAST(d.lastmodifieddate AS DATETIME), CAST(d.createddate AS DATETIME)) >=
+        (SELECT MAX(COALESCE(d_lastmodifieddate, d_createddate)) FROM ${self()})`
+)}
+*/

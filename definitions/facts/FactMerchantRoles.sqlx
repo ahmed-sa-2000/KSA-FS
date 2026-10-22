@@ -32,9 +32,9 @@ WITH merchant_roles_stg AS (
         IsActive as mr_isactive,
         CreatedBy as mr_createdby,
         LastModifiedBy as mr_modifiedby,
-        CreatedDate as mr_createddate,
-        LastModifiedDate as mr_modifieddate,
-        COALESCE(LastModifiedDate, CreatedDate) as row_timestamp
+        CAST(CreatedDate AS DATETIME) as mr_createddate,
+        CAST(LastModifiedDate AS DATETIME) as mr_modifieddate,
+        COALESCE(CAST(LastModifiedDate AS DATETIME), CAST(CreatedDate AS DATETIME)) as row_timestamp
     FROM ${ref('ext_MerchantRoles')}
 ),
 merchants_stg AS (

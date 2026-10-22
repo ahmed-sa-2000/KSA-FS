@@ -1,0 +1,54 @@
+config {
+    type: "table",
+    dependencies: [
+        'assert_ext_InstallmentItems_not_empty',
+        'assert_LookupInstallmentItemStatus_not_empty'
+    ],
+     bigquery: {
+    clusterBy: ["ii_installmentdetailsid", "ii_itemcode" ]
+    }    
+
+    // uniqueKey: ["id"]
+}
+
+pre_operations {
+  CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
+      ['InstallmentItems'],
+      FALSE
+    )
+}
+
+post_operations {
+  CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
+      ['InstallmentItems'],
+      TRUE
+    )
+}
+
+SELECT
+    i.id AS ii_id,
+    i.installmentdetailsid AS ii_installmentdetailsid,
+    i.itemcode AS ii_itemcode,
+    i.itemname AS ii_itemname,
+    CAST(i.price AS BIGNUMERIC) AS ii_price,
+    i.quantity AS ii_quanity,
+    i.refundedquantity AS ii_refundedquantity,
+    i.status AS ii_status,
+    l.name AS ii_statusname,
+    i.installmentmonths AS ii_installmentmonths,
+    CAST(i.downpayment AS BIGNUMERIC) AS ii_downpayment,
+    i.createdby AS ii_createdby,
+    CAST(i.createddate AS DATETIME) AS ii_createddate,
+    i.lastmodifiedby AS ii_modifiedby,
+    CAST(i.lastmodifieddate AS DATETIME) AS ii_lastmodifieddate,
+    CURRENT_DATETIME() AS etl_timestamp
+FROM ${ref('ext_InstallmentItems')} i
+LEFT JOIN ${ref('LookupInstallmentItemStatus')} l
+    ON l.id = i.status
+
+/*
+${when(incremental(),
+  `WHERE COALESCE(CAST(i.lastmodifieddate AS DATETIME), CAST(i.createddate AS DATETIME)) >=
+        (SELECT MAX(COALESCE(ii_lastmodified_date, ii_created_date)) FROM ${self()})`
+)}
+*/

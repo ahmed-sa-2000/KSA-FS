@@ -18,8 +18,11 @@ assertions.assertNotEmpty("ext_PromotionsTypesLookups");
 assertions.assertNotEmpty("ext_RequestStatuses");
 assertions.assertNotEmpty("LookupInstallmentStatus");
 assertions.assertNotEmpty("LookupInstallmentSources");
-
-
-//loansDB - Dimesions
-
+assertions.assertNotEmpty("ext_InstallmentDetails");
+assertions.assertNotEmpty("LookupInstallmentDetailsStatus");
+assertions.assertNotEmpty("LookupInstallmentItemStatus");
+assertions.assertNotEmpty("ext_InstallmentItems");
+assertions.assertNotEmpty("ext_Deposits");
+assertions.assertNotEmpty("LookupDepositsTypes");
+assertions.assertNotEmpty("LookupDepositsStatus");
 assertions.assertNotEmpty("ext_Installments");

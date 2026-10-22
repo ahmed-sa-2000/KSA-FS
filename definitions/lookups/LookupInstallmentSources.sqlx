@@ -7,12 +7,12 @@ config {
 }
 
 SELECT
-  id ,
-  name ,
+  id,
+  name,
   createdBy AS created_by,
   lastmodifiedby AS modified_by,
-  CreatedDate AS created_date,
-  LastModifiedDate lastmodified_date,
+  CAST(CreatedDate AS DATETIME) AS created_date,
+  CAST(LastModifiedDate AS DATETIME) AS lastmodified_date,
   CURRENT_DATETIME() AS etl_timestamp
 FROM
   ${ref('ext_InstallmentsSourcesLookups')}
