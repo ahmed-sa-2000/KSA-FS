@@ -7,7 +7,7 @@ config {
         'assert_FactInstallmentDetails_not_empty'
     ],
     bigquery: {
-        clusterBy: ["d_installmentdetailsid", "d_installmentid"]
+        clusterBy: ["deposit_id", "installmentdetails_id", "installment_id", "customer_id"]
     }
 
     // uniqueKey: ["id"]
@@ -76,7 +76,7 @@ FROM ${ref('ext_Deposits')} d
     LEFT JOIN ${ref('LookupDepositsStatus')} s
         ON s.id = d.status
     LEFT JOIN ${ref('FactInstallmentDetails')} ids
-        ON ids.installmentdetails_id = d.installmentdetails_id
+        ON ids.installmentdetails_id = d.installmentdetailsid
 /*
 ${when(incremental(),
   `WHERE COALESCE(CAST(d.lastmodifieddate AS DATETIME), CAST(d.createddate AS DATETIME)) >=

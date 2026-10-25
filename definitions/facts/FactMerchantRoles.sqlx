@@ -40,7 +40,7 @@ WITH merchant_roles_stg AS (
 merchants_stg AS (
     SELECT mu_merchantid, ds_storeid
     FROM ${ref('DimMerchantUsers')}
-),
+)
 SELECT 
     mrs.mr_id,
     mrs.mr_merchantid,
