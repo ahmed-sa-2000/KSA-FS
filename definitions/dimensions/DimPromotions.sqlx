@@ -1,0 +1,52 @@
+config {
+    type: "table",
+
+    dependencies: [
+        "assert_ext_Promotions_not_empty",
+    ]
+}
+
+
+
+SELECT
+  p.id                                    AS p_promoid,
+  p.promocode                             AS p_promocode,
+  p.promotionname                         AS p_promotionname,
+  p.promotypeid                           AS p_promotiontype_id,
+  t.pt_typecode,
+  t.pt_typename,
+  CAST(p.startdate AS DATETIME)           AS p_startdate,
+  CAST(p.enddate AS DATETIME)             AS p_enddate,
+  p.isactive                              AS p_isactive,
+  p.stage                                 AS p_stage,
+  ps.name                                 AS ps_stagename,
+  p.description                           AS p_description,
+  p.createdby                             AS p_createdby,
+  CAST(p.createddate AS DATETIME)         AS p_createddate,
+  p.lastmodifiedby                        AS p_lastmodifiedby,
+  CAST(p.lastmodifieddate AS DATETIME)    AS p_lastmodifieddate
+FROM ${ref("ext_Promotions")} AS p
+LEFT JOIN ${ref("DimPromotionTypes")} AS t
+  ON p.promotypeid = t.pt_promotion_typeid
+LEFT JOIN ${ref("LookupPromoStage")} AS ps
+on p.stage = ps.id
+
+pre_operations {
+  CALL
+    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['Promotions'],
+      FALSE )
+}
+
+post_operations {
+  CALL
+    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['Promotions'],
+      TRUE )
+}
+
+/*
+  ${when(incremental(),
+  `WHERE COALESCE(CAST(p.lastmodifieddate AS DATETIME), CAST(p.createddate AS DATETIME)) >=
+        (SELECT MAX(COALESCE(p_lastmodifieddate, p_createddate)) FROM ${self()})`
+)}
+*/
+

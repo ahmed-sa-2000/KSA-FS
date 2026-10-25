@@ -1,0 +1,32 @@
+config {
+    type: "table",
+
+    dependencies: [
+        "assert_ext_Dealers_not_empty",
+    ]
+}
+
+SELECT
+    id AS d_dealerid,
+    Name AS d_name,
+    IsActive AS d_active,
+    ReturnPolicy AS d_returnpolicy,
+    CAST(InterestRate AS FLOAT64) AS d_interestrate,
+    Refundable AS d_refundable,
+    Phone AS d_phone,
+    Visible AS d_visible
+  FROM
+    ${ref("ext_Dealers")}
+
+    
+pre_operations {
+  CALL
+    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['Dealers'],
+      FALSE )
+}
+
+post_operations {
+  CALL
+    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['Dealers'],
+      TRUE )
+}

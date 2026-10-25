@@ -1,0 +1,60 @@
+config {
+    type: "table",
+
+    dependencies: [
+        "assert_ext_PromotionTypes_not_empty",
+        "assert_LookupPromotionTypeConfig_not_empty"
+    ]
+}
+
+
+WITH config_agg AS (
+  SELECT
+    promotiontypeid,
+    TO_JSON(
+      ARRAY_AGG(
+        STRUCT(
+          attribute_name,
+          attribute_valuetype,
+          required,
+          display_name
+        )
+        ORDER BY id
+      )
+    ) AS config_json
+  FROM ${ref("LookupPromotionTypeConfig")}
+  GROUP BY promotiontypeid
+)
+
+SELECT
+  t.id                                     AS pt_promotion_typeid,
+  t.typename                               AS pt_typename,
+  t.code                                   AS pt_typecode,
+  c.config_json                            AS pt_configjson,
+  t.createdby                              AS pt_createdby,
+  CAST(t.createddate AS DATETIME)          AS pt_createddate,
+  t.lastmodifiedby                         AS pt_lastmodifiedby,
+  CAST(t.lastmodifieddate AS DATETIME)     AS pt_lastmodifieddate
+FROM ${ref("ext_PromotionTypes")} AS t
+LEFT JOIN config_agg AS c
+  ON t.id = c.promotiontypeid 
+
+pre_operations {
+  CALL
+    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['PromotionTypes'],
+      FALSE )
+}
+
+post_operations {
+  CALL
+    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['PromotionTypes'],
+      TRUE )
+}
+
+
+/*
+  ${when(incremental(),
+  `WHERE COALESCE(CAST(t.lastmodifieddate AS DATETIME), CAST(t.createddate AS DATETIME)) >=
+        (SELECT MAX(COALESCE(pt_lastmodifieddate, pt_createddate)) FROM ${self()})`
+)}
+*/

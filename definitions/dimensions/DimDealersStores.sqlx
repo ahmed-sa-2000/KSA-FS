@@ -3,7 +3,7 @@ config {
 
     dependencies: [
     "assert_ext_DealersStores_not_empty",
-    "assert_ext_Dealers_not_empty"
+    "assert_LookupDealers_not_empty"
   ],
     bigquery: {
         clusterBy: ["ds_id", "ds_storecode"]
@@ -30,16 +30,16 @@ post_operations {
 WITH
 dealers AS (
   SELECT
-    id AS d_dealerid,
-    Name AS d_name,
-    IsActive AS d_active,
-    ReturnPolicy AS d_returnpolicy,
-    CAST(InterestRate AS FLOAT64) AS d_interestrate,
-    Refundable AS d_refundable,
-    Phone AS d_phone,
-    Visible AS d_visible
+     d_dealerid,
+    d_name,
+     d_active,
+     d_returnpolicy,
+     d_interestrate,
+     d_refundable,
+    d_phone,
+     d_visible
   FROM
-    ${ref("ext_Dealers")} ),
+    ${ref("LookupDealers")} ),
 dealer_stores AS (
   SELECT
     id AS ds_id,

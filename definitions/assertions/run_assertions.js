@@ -5,16 +5,15 @@ assertions.assertNotEmpty("ext_DealersStores");
 assertions.assertNotEmpty("ext_Roles");
 assertions.assertNotEmpty("ext_Users");
 assertions.assertNotEmpty("ext_MerchantRoles");
+assertions.assertNotEmpty("LookupDealers");
 
-// LoansDB lookups
+// LoansDB 
 assertions.assertNotEmpty("ext_InstallmentsStatusLookups");
 assertions.assertNotEmpty("ext_InstallmentsSourcesLookups");
 assertions.assertNotEmpty("ext_InstallmentsDetailsStatusLookups");
 assertions.assertNotEmpty("ext_InstallmentItemsStatusLookups");
 assertions.assertNotEmpty("ext_DepositsStatusLookups");
 assertions.assertNotEmpty("ext_DepositsTypesLookups");
-assertions.assertNotEmpty("ext_PromoStageLookups");
-assertions.assertNotEmpty("ext_PromotionsTypesLookups");
 assertions.assertNotEmpty("ext_RequestStatuses");
 assertions.assertNotEmpty("LookupInstallmentStatus");
 assertions.assertNotEmpty("LookupInstallmentSources");
@@ -26,3 +25,12 @@ assertions.assertNotEmpty("ext_Deposits");
 assertions.assertNotEmpty("LookupDepositsTypes");
 assertions.assertNotEmpty("LookupDepositsStatus");
 assertions.assertNotEmpty("ext_Installments");
+
+// PromotionDB
+assertions.assertNotEmpty("ext_PromotionTypeConfigs");
+assertions.assertNotEmpty("ext_PromotionTypes");
+assertions.assertNotEmpty("LookupPromotionTypeConfig");
+assertions.assertNotEmpty("ext_PromoStageLookups");
+assertions.assertNotEmpty("ext_PromotionsTypesLookups");
+assertions.assertNotEmpty("ext_Promotions");
+assertions.assertNotEmpty("ext_PromoMerchants");

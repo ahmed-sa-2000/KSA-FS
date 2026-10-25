@@ -1,0 +1,41 @@
+config {
+    type: "table",
+
+    dependencies: [
+        "assert_ext_PromoMerchants_not_empty",
+    ],
+    
+    bigquery: {
+      clusterBy: ["promo_id, merchant_id"]
+    }
+}
+
+SELECT
+  id           AS pm_promo_merchantid,
+  promoid      AS pm_promoid,
+  merchantid   AS pm_merchantid,
+  isactive     AS pm_isactive,
+  createdby                           AS pm_createdby,
+  CAST(createddate AS DATETIME)       AS pm_createddate,
+  lastmodifiedby                      AS pm_lastmodifiedby,
+  CAST(lastmodifieddate AS DATETIME)  AS pm_lastmodifieddate
+FROM ${ref("ext_PromoMerchants")}
+
+pre_operations {
+  CALL
+    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['PromoMerchants'],
+      FALSE )
+}
+
+post_operations {
+  CALL
+    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['PromoMerchants'],
+      TRUE )
+}
+
+/*
+  ${when(incremental(),
+  `WHERE COALESCE(CAST(lastmodifieddate AS DATETIME), CAST(createddate AS DATETIME)) >=
+        (SELECT MAX(COALESCE(pm_lastmodifieddate, pm_createddate)) FROM ${self()})`
+)}
+*/

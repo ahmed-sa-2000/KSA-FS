@@ -3,7 +3,8 @@ config {
 
     dependencies: [
     "assert_LookupInstallmentStatus_not_empty",
-    "assert_LookupInstallmentSources_not_empty"
+    "assert_LookupInstallmentSources_not_empty",
+    "assert_ext_Installments_not_empty"
   ]
     /*
       // uniqueKey: ["i_id"]
@@ -67,3 +68,24 @@ SELECT
 FROM installment_stg i
     LEFT JOIN installment_status_stg ist ON ist.id = i.status
     LEFT JOIN installment_sources_stg isg  ON isg.id = i.sourceid
+
+
+
+pre_operations {
+  CALL
+    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['Installments'],
+      FALSE )
+}
+
+post_operations {
+  CALL
+    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['Installments'],
+      TRUE )
+}
+
+/*
+${when(incremental(),
+  `WHERE COALESCE(CAST(i.lastmodifieddate AS DATETIME), CAST(i.createddate AS DATETIME)) >=
+        (SELECT MAX(COALESCE(i_lastmodifieddate, i_createddate)) FROM ${self()})`
+)}
+*/

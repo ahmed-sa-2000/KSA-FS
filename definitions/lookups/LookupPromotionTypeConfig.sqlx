@@ -1,0 +1,36 @@
+config {
+    type: "table",
+
+    dependencies: [
+        "assert_ext_PromotionTypeConfigs_not_empty",
+        
+    ]
+}
+
+SELECT
+  id,
+  promotiontypeid,
+  attributename AS attribute_name,
+  attributevaluetype AS attribute_valuetype,
+  required,
+  displayname AS display_name,
+  createdby AS created_by,
+  lastmodifiedby AS lastmodified_by,
+  CAST(CreatedDate AS DATETIME) AS created_date,
+  CAST(lastmodifieddate AS DATETIME) AS lastmodified_date,
+  CURRENT_DATETIME() AS etl_timestamp
+FROM
+  ${ref('ext_PromotionTypeConfigs')}
+
+
+pre_operations {
+  CALL
+    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['PromotionTypeConfigs'],
+      FALSE )
+}
+
+post_operations {
+  CALL
+    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['PromotionTypeConfigs'],
+      TRUE )
+}
