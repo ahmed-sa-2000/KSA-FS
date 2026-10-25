@@ -1,12 +1,12 @@
 config {
     type: "table",
     dependencies: [
-        'assert_ext_MerchantRoles_not_empty'
+        'assert_ext_MerchantRoles_not_empty',
+        'assert_DimMerchantUsers_not_empty'
     ],
     bigquery: {
         clusterBy: ["mr_merchantid", "mr_storeid", "mr_roleid"]
     }
-
     // uniqueKey: ["mr_id"]
 }
 
@@ -38,17 +38,13 @@ WITH merchant_roles_stg AS (
     FROM ${ref('ext_MerchantRoles')}
 ),
 merchants_stg AS (
-    SELECT mu_merchantid, mu_storecode
+    SELECT mu_merchantid, ds_storeid
     FROM ${ref('DimMerchantUsers')}
 ),
-dealers_stores_stg AS (
-    SELECT ds_id, ds_storecode
-    FROM ${ref('DimDealersStores')}
-)
 SELECT 
     mrs.mr_id,
     mrs.mr_merchantid,
-    dss.ds_id AS mr_storeid,
+    ms.ds_storeid AS mr_storeid,
     mrs.mr_roleid,
     mrs.mr_isactive,
     mrs.mr_createdby,
@@ -59,7 +55,6 @@ SELECT
     CURRENT_DATETIME() AS etl_timestamp
 FROM merchant_roles_stg mrs
     LEFT JOIN merchants_stg ms ON ms.mu_merchantid = mrs.mr_merchantid
-    LEFT JOIN dealers_stores_stg dss ON dss.ds_storecode = ms.mu_storecode
 
 /*
 ${when(incremental(), 

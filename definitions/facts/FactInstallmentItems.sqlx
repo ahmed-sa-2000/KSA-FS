@@ -2,10 +2,11 @@ config {
     type: "table",
     dependencies: [
         'assert_ext_InstallmentItems_not_empty',
-        'assert_LookupInstallmentItemStatus_not_empty'
+        'assert_LookupInstallmentItemStatus_not_empty',
+        'assert_FactInstallmentDetails_not_empty'
     ],
-     bigquery: {
-    clusterBy: ["ii_installmentdetailsid", "ii_itemcode" ]
+    bigquery: {
+        clusterBy: ["installmentitem_id", "installmentdetails_id", "installment_id", "customer_id"]
     }    
 
     // uniqueKey: ["id"]
@@ -13,38 +14,42 @@ config {
 
 pre_operations {
   CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
-      ['InstallmentItems'],
+      ['installmentitems'],
       FALSE
     )
 }
 
 post_operations {
   CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
-      ['InstallmentItems'],
+      ['installmentitems'],
       TRUE
     )
 }
 
 SELECT
-    i.id AS ii_id,
-    i.installmentdetailsid AS ii_installmentdetailsid,
-    i.itemcode AS ii_itemcode,
-    i.itemname AS ii_itemname,
-    CAST(i.price AS BIGNUMERIC) AS ii_price,
-    i.quantity AS ii_quanity,
-    i.refundedquantity AS ii_refundedquantity,
-    i.status AS ii_status,
-    l.name AS ii_statusname,
-    i.installmentmonths AS ii_installmentmonths,
-    CAST(i.downpayment AS BIGNUMERIC) AS ii_downpayment,
-    i.createdby AS ii_createdby,
-    CAST(i.createddate AS DATETIME) AS ii_createddate,
-    i.lastmodifiedby AS ii_modifiedby,
-    CAST(i.lastmodifieddate AS DATETIME) AS ii_lastmodifieddate,
+    i.id AS installmentitem_id,
+    i.installmentdetailsid AS installmentdetails_id,
+    fid.purchaseorder_id,
+    fid.installment_id,
+    fid.customer_id,
+    fid.merchant_id,
+    fid.branch_id,
+    i.itemcode AS itemcode,
+    i.itemname AS itemname,
+    CAST(i.price AS BIGNUMERIC) AS price,
+    i.quantity AS quanity,
+    i.refundedquantity AS refunded_quantity,
+    i.status AS status,
+    l.name AS status_name,
+    i.createdby AS createdby,
+    CAST(i.createddate AS DATETIME) AS createddate,
+    i.lastmodifiedby AS modifiedby,
+    CAST(i.lastmodifieddate AS DATETIME) AS lastmodifieddate,
+    COALESCE(CAST(i.lastmodifieddate AS DATETIME), CAST(i.createddate AS DATETIME)) as row_timestamp,
     CURRENT_DATETIME() AS etl_timestamp
 FROM ${ref('ext_InstallmentItems')} i
-LEFT JOIN ${ref('LookupInstallmentItemStatus')} l
-    ON l.id = i.status
+    LEFT JOIN ${ref('LookupInstallmentItemStatus')} l ON l.id = i.status
+    LEFT JOIN ${ref('FactInstallmentDetails')} fid ON fid.installmentdetails_id = i.installmentdetailsid
 
 /*
 ${when(incremental(),

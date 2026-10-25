@@ -1,9 +1,24 @@
 config {
     type: "table",
-
+    schema: "Lookups",
     dependencies: [
         "assert_ext_PromoStageLookups_not_empty",
-    ]
+    ],
+    bigquery: {
+      clusterBy: ["id", "name"]
+    }
+}
+
+pre_operations {
+  CALL
+    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['promostagelookups'],
+      FALSE )
+}
+
+post_operations {
+  CALL
+    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['promostagelookups'],
+      TRUE )
 }
 
 SELECT
@@ -16,16 +31,3 @@ SELECT
   CURRENT_DATETIME() AS etl_timestamp
 FROM
   ${ref('ext_PromoStageLookups')}
-
-
-pre_operations {
-  CALL
-    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['PromoStageLookups'],
-      FALSE )
-}
-
-post_operations {
-  CALL
-    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['PromoStageLookups'],
-      TRUE )
-}

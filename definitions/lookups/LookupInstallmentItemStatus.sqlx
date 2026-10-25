@@ -1,9 +1,24 @@
 config {
     type: "table",
-
+    schema: "Lookups",
     dependencies: [
         "assert_ext_InstallmentItemsStatusLookups_not_empty",
-    ]
+    ],
+    bigquery: {
+      clusterBy: ["id", "name"]
+    }
+}
+
+pre_operations {
+  CALL
+    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['installmentitemsstatuslookups'],
+      FALSE )
+}
+
+post_operations {
+  CALL
+    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['installmentitemsstatuslookups'],
+      TRUE )
 }
 
 SELECT
@@ -17,14 +32,3 @@ SELECT
 FROM
   ${ref('ext_InstallmentItemsStatusLookups')}
 
-pre_operations {
-  CALL
-    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['InstallmentItemsStatusLookups'],
-      FALSE )
-}
-
-post_operations {
-  CALL
-    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['InstallmentItemsStatusLookups'],
-      TRUE )
-}

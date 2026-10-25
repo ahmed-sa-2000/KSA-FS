@@ -1,10 +1,26 @@
 config {
     type: "table",
-
+    schema: "Lookups",
     dependencies: [
         "assert_ext_DepositsTypesLookups_not_empty",
-    ]
+    ],
+    bigquery: {
+      clusterBy: ["id", "name"]
+    }
 }
+
+pre_operations {
+  CALL
+    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['depositstypeslookups'],
+      FALSE )
+}
+
+post_operations {
+  CALL
+    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['depositstypeslookups'],
+      TRUE )
+}
+
 
 SELECT
   id,
@@ -18,14 +34,3 @@ FROM
   ${ref('ext_DepositsTypesLookups')}
 
 
-pre_operations {
-  CALL
-    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['DepositsTypesLookups'],
-      FALSE )
-}
-
-post_operations {
-  CALL
-    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['DepositsTypesLookups'],
-      TRUE )
-}

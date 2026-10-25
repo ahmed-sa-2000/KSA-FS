@@ -1,10 +1,26 @@
 config {
     type: "table",
-
+    schema: "Lookups",
     dependencies: [
         "assert_ext_InstallmentsDetailsStatusLookups_not_empty",
-    ]
+    ],
+    bigquery: {
+      clusterBy: ["id", "name"]
+    }
 }
+
+pre_operations {
+  CALL
+    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['installmentsdetailsstatuslookups'],
+      FALSE )
+}
+
+post_operations {
+  CALL
+    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['installmentsdetailsstatuslookups'],
+      TRUE )
+}
+
 
 SELECT
   id,
@@ -16,16 +32,3 @@ SELECT
   CURRENT_DATETIME() AS etl_timestamp
 FROM
   ${ref('ext_InstallmentsDetailsStatusLookups')}
-
-
-pre_operations {
-  CALL
-    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['InstallmentsDetailsStatusLookups'],
-      FALSE )
-}
-
-post_operations {
-  CALL
-    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['InstallmentsDetailsStatusLookups'],
-      TRUE )
-}

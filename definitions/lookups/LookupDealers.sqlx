@@ -1,9 +1,24 @@
 config {
     type: "table",
-
+    schema: "Lookups",
     dependencies: [
         "assert_ext_Dealers_not_empty",
-    ]
+    ],
+    bigquery: {
+      clusterBy: ["d_dealerid", "d_name"]
+    }
+}
+
+pre_operations {
+  CALL
+    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['dealers'],
+      FALSE )
+}
+
+post_operations {
+  CALL
+    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['dealers'],
+      TRUE )
 }
 
 SELECT
@@ -14,19 +29,9 @@ SELECT
     CAST(InterestRate AS FLOAT64) AS d_interestrate,
     Refundable AS d_refundable,
     Phone AS d_phone,
-    Visible AS d_visible
+    Visible AS d_visible,
+    CURRENT_DATETIME() AS etl_timestamp
   FROM
     ${ref("ext_Dealers")}
 
     
-pre_operations {
-  CALL
-    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['Dealers'],
-      FALSE )
-}
-
-post_operations {
-  CALL
-    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['Dealers'],
-      TRUE )
-}

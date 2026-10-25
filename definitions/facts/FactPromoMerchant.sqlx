@@ -6,32 +6,34 @@ config {
     ],
     
     bigquery: {
-      clusterBy: ["promo_id, merchant_id"]
+      clusterBy: ["pm_promoid, pm_merchantid"]
     }
 }
 
+pre_operations {
+  CALL
+    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['promomerchants'],
+      FALSE )
+}
+
+post_operations {
+  CALL
+    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['promomerchants'],
+      TRUE )
+}
+
 SELECT
-  id           AS pm_promo_merchantid,
+  id           AS pm_id,
   promoid      AS pm_promoid,
   merchantid   AS pm_merchantid,
   isactive     AS pm_isactive,
   createdby                           AS pm_createdby,
   CAST(createddate AS DATETIME)       AS pm_createddate,
   lastmodifiedby                      AS pm_lastmodifiedby,
-  CAST(lastmodifieddate AS DATETIME)  AS pm_lastmodifieddate
+  CAST(lastmodifieddate AS DATETIME)  AS pm_lastmodifieddate,
+  COALESCE(CAST(lastmodifieddate AS DATETIME), CAST(createddate AS DATETIME)) as row_timestamp,
+  CURRENT_DATETIME() AS etl_timestamp
 FROM ${ref("ext_PromoMerchants")}
-
-pre_operations {
-  CALL
-    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['PromoMerchants'],
-      FALSE )
-}
-
-post_operations {
-  CALL
-    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['PromoMerchants'],
-      TRUE )
-}
 
 /*
   ${when(incremental(),

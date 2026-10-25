@@ -1,13 +1,12 @@
 config {
     type: "table",
-
     dependencies: [
     "assert_ext_DealersStores_not_empty",
     "assert_LookupDealers_not_empty"
   ],
-    bigquery: {
-        clusterBy: ["ds_id", "ds_storecode"]
-    }
+  bigquery: {
+    clusterBy: ["ds_id", "ds_storecode"]
+  }
     /*
       // uniqueKey: ["ds_id"]
     */
@@ -15,14 +14,14 @@ config {
 
 pre_operations {
   CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
-      ['dealersstores', 'dealers'],
+      ['dealersstores'],
       FALSE
     )
 }
 
 post_operations {
   CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
-      ['dealersstores', 'dealers'],
+      ['dealersstores'],
       TRUE
     )
 }
@@ -30,14 +29,14 @@ post_operations {
 WITH
 dealers AS (
   SELECT
-     d_dealerid,
+    d_dealerid,
     d_name,
-     d_active,
-     d_returnpolicy,
-     d_interestrate,
-     d_refundable,
+    d_active,
+    d_returnpolicy,
+    d_interestrate,
+    d_refundable,
     d_phone,
-     d_visible
+    d_visible
   FROM
     ${ref("LookupDealers")} ),
 dealer_stores AS (
@@ -61,7 +60,7 @@ stg_cte as (
   SELECT
     ds.ds_id,
     ds.ds_storecode,
-    d.d_dealerid AS ds_dealerid,
+    ds.dealerid AS ds_dealerid,
     -- Dealer Fields
     d.d_name,
     d.d_active,

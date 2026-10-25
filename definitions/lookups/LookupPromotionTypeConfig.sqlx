@@ -1,10 +1,25 @@
 config {
     type: "table",
-
+    schema: "Lookups",
     dependencies: [
         "assert_ext_PromotionTypeConfigs_not_empty",
         
-    ]
+    ],
+    bigquery: {
+      clusterBy: ["promotiontypeid", "attribute_name"]
+    }
+}
+
+pre_operations {
+  CALL
+    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['promotiontypeconfigs'],
+      FALSE )
+}
+
+post_operations {
+  CALL
+    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['promotiontypeconfigs'],
+      TRUE )
 }
 
 SELECT
@@ -21,16 +36,3 @@ SELECT
   CURRENT_DATETIME() AS etl_timestamp
 FROM
   ${ref('ext_PromotionTypeConfigs')}
-
-
-pre_operations {
-  CALL
-    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['PromotionTypeConfigs'],
-      FALSE )
-}
-
-post_operations {
-  CALL
-    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['PromotionTypeConfigs'],
-      TRUE )
-}

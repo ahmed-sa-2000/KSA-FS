@@ -1,15 +1,16 @@
 config {
-    type: "table",
-    /*
-      uniqueKey: ["mu_merchantid"]
-    */
+  type: "table",
+  /*
+    uniqueKey: ["mu_merchantid"]
+  */
 
-    dependencies: [
-    "assert_ext_Users_not_empty"
+  dependencies: [
+    "assert_ext_Users_not_empty",
+    "assert_DimDealersStores_not_empty"
   ],
-  
+
   bigquery: {
-    clusterBy: ["mu_merchantid", "mu_storecode"]
+    clusterBy: ["mu_merchantid", "ds_storeid"]
   }
 }
 
@@ -29,21 +30,23 @@ post_operations {
 
 
   select
-    id as mu_merchantid,
-    StoreCode as mu_storecode,
-    UserName as mu_username,
-    Email as mu_email,
-    IsActive as mu_isactive,
-    IsSuperMerchant as mu_issuper_merchant,
-    SkipApproval as mu_skipapproval,
-    CreatedBy as mu_createdby,
-    LastModifiedBy as mu_modifiedby,
-    CAST(CreatedDate AS DATETIME) as mu_createddate,
-    CAST(LastModifiedDate AS DATETIME) as mu_modifieddate,
-    COALESCE(CAST(LastModifiedDate AS DATETIME), CAST(CreatedDate AS DATETIME)) as row_timestamp,
+    u.id as mu_merchantid,
+    ds.ds_id as ds_storeid,
+    ds.ds_name as ds_storename,
+    u.StoreCode as mu_storecode,
+    u.UserName as mu_username,
+    u.Email as mu_email,
+    u.IsActive as mu_isactive,
+    u.IsSuperMerchant as mu_issuper_merchant,
+    u.SkipApproval as mu_skipapproval,
+    u.CreatedBy as mu_createdby,
+    u.LastModifiedBy as mu_modifiedby,
+    CAST(u.CreatedDate AS DATETIME) as mu_createddate,
+    CAST(u.LastModifiedDate AS DATETIME) as mu_modifieddate,
+    COALESCE(CAST(u.LastModifiedDate AS DATETIME), CAST(u.CreatedDate AS DATETIME)) as row_timestamp,
     CURRENT_DATETIME() AS etl_timestamp
-
-  from ${ref('ext_Users')}
+  from ${ref('ext_Users')} u
+    LEFT JOIN ${ref('DimDealersStores')} ds ON ds.ds_storecode = u.StoreCode
 
 
 /*

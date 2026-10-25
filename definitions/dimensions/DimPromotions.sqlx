@@ -3,10 +3,25 @@ config {
 
     dependencies: [
         "assert_ext_Promotions_not_empty",
-    ]
+        "assert_DimPromotionTypes_not_empty",
+        "assert_LookupPromoStage_not_empty"
+    ],
+    bigquery: {
+      clusterBy: ["p_promoid", "p_promocode"]
+    }
 }
 
+pre_operations {
+  CALL
+    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['promotions'],
+      FALSE )
+}
 
+post_operations {
+  CALL
+    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['promotions'],
+      TRUE )
+}
 
 SELECT
   p.id                                    AS p_promoid,
@@ -24,24 +39,14 @@ SELECT
   p.createdby                             AS p_createdby,
   CAST(p.createddate AS DATETIME)         AS p_createddate,
   p.lastmodifiedby                        AS p_lastmodifiedby,
-  CAST(p.lastmodifieddate AS DATETIME)    AS p_lastmodifieddate
+  CAST(p.lastmodifieddate AS DATETIME)    AS p_lastmodifieddate,
+  COALESCE(CAST(p.lastmodifieddate AS DATETIME), CAST(p.createddate AS DATETIME)) as row_timestamp,
+  CURRENT_DATETIME() AS etl_timestamp
 FROM ${ref("ext_Promotions")} AS p
-LEFT JOIN ${ref("DimPromotionTypes")} AS t
-  ON p.promotypeid = t.pt_promotion_typeid
-LEFT JOIN ${ref("LookupPromoStage")} AS ps
-on p.stage = ps.id
-
-pre_operations {
-  CALL
-    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['Promotions'],
-      FALSE )
-}
-
-post_operations {
-  CALL
-    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['Promotions'],
-      TRUE )
-}
+  LEFT JOIN ${ref("DimPromotionTypes")} AS t
+    ON p.promotypeid = t.pt_promotion_typeid
+  LEFT JOIN ${ref("LookupPromoStage")} AS ps
+  on p.stage = ps.id
 
 /*
   ${when(incremental(),

@@ -1,8 +1,11 @@
 config {
     type: "table",
     dependencies: [
-    "assert_ext_Roles_not_empty",
-  ]
+      "assert_ext_Roles_not_empty",
+    ],
+    bigquery: {
+      clusterBy: ["r_roleid", "r_rolename"]
+  }
 }
 
 pre_operations {

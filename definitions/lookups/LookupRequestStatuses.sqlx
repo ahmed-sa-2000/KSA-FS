@@ -2,8 +2,11 @@ config {
     type: "table",
     schema: "Lookups",
     dependencies: [
-    "assert_ext_RequestStatuses_not_empty",
-  ]
+      "assert_ext_RequestStatuses_not_empty",
+    ],
+    bigquery: {
+      clusterBy: ["id", "name"]
+    }
 }
 
 pre_operations {

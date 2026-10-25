@@ -4,8 +4,8 @@ config {
         'assert_ext_InstallmentDetails_not_empty',
         'assert_LookupInstallmentDetailsStatus_not_empty'
     ],
-   bigquery: {
-        clusterBy: ["ind_installmentid", "ind_merchantid" , "ind_customerid"]
+    bigquery: {
+        clusterBy: ["installmentdetails_id", "installment_id"]
     }    
 
     // uniqueKey: ["id"]
@@ -14,47 +14,45 @@ config {
 
 pre_operations {
   CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
-      ['InstallmentDetails'],
+      ['installmentdetails'],
       FALSE
     )
 }
 
 post_operations {
   CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
-      ['InstallmentDetails'],
+      ['installmentdetails'],
       TRUE
     )
 }
 
 SELECT
-    d.id AS ind_id,
-    d.installmentid AS ind_installmentid,
-    d.promoid AS ind_promoid,
-    d.purchaseorderid AS ind_poid,
-    d.sourceid AS ind_sourceid,
-    d.customerid AS ind_customerid,
-    d.merchantid AS ind_merchantid,
-    d.branchid AS ind_branchid,
-    CAST(d.adminfees AS BIGNUMERIC) AS ind_adminfees,
-    d.status AS ind_status,
-    l.name AS ind_statusname,
-    d.months AS ind_months,
-    CAST(d.interestrate AS FLOAT64) AS ind_interestrate,
-    CAST(d.monthlypaid AS BIGNUMERIC) AS ind_monthlypaid,
-    CAST(d.installmentamount AS BIGNUMERIC) AS ind_installmentamount,
-    CAST(d.downpayment AS BIGNUMERIC) AS ind_downpayment,
-    CAST(d.totalamount AS BIGNUMERIC) AS ind_totalamount,
-    d.createdby AS ind_createdby,
-    CAST(d.createddate AS DATETIME) AS ind_createddate,
-    d.lastmodifiedby AS ind_modifiedby,
-    CAST(d.lastmodifieddate AS DATETIME) AS ind_lastmodifieddate,
+    d.id AS installmentdetails_id,
+    d.installmentid AS installment_id,
+    d.purchaseorderid AS purchaseorder_id,
+    d.customerid AS customer_id,
+    d.promoid AS promo_id,
+    d.merchantid AS merchant_id,
+    d.branchid AS branch_id,
+    d.sourceid AS source_id,
+    d.status AS status_id,
+    l.name AS status_name,
+    d.months AS tenor_months,
+    CAST(d.adminfees AS BIGNUMERIC) AS adminfees,
+    CAST(d.downpayment AS BIGNUMERIC) AS downpayment,
+    CAST(d.interestrate AS FLOAT64) AS interestrate,
+    CAST(d.installmentamount AS BIGNUMERIC) AS installmentamount,
+    CAST(d.monthlypaid AS BIGNUMERIC) AS monthlypaid,
+    CAST(d.totalamount AS BIGNUMERIC) AS totalamount,
+    d.createdby AS createdby,
+    CAST(d.createddate AS DATETIME) AS createddate,
+    d.lastmodifiedby AS modifiedby,
+    CAST(d.lastmodifieddate AS DATETIME) AS lastmodifieddate,
+    COALESCE(CAST(d.lastmodifieddate AS DATETIME), CAST(d.createddate AS DATETIME)) as row_timestamp,
     CURRENT_DATETIME() AS etl_timestamp
 FROM ${ref('ext_InstallmentDetails')} d
-LEFT JOIN ${ref('LookupInstallmentDetailsStatus')} l
-    ON l.id = d.status
-
-
-
+    LEFT JOIN ${ref('LookupInstallmentDetailsStatus')} l
+        ON l.id = d.status
  
 /*
 ${when(incremental(),

@@ -4,7 +4,22 @@ config {
     dependencies: [
         "assert_ext_PromotionTypes_not_empty",
         "assert_LookupPromotionTypeConfig_not_empty"
-    ]
+    ],
+    bigquery: {
+      clusterBy: ["pt_promotion_typeid", "pt_typename"]
+    }
+}
+
+pre_operations {
+  CALL
+    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['promotiontypes'],
+      FALSE )
+}
+
+post_operations {
+  CALL
+    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['promotiontypes'],
+      TRUE )
 }
 
 
@@ -34,23 +49,11 @@ SELECT
   t.createdby                              AS pt_createdby,
   CAST(t.createddate AS DATETIME)          AS pt_createddate,
   t.lastmodifiedby                         AS pt_lastmodifiedby,
-  CAST(t.lastmodifieddate AS DATETIME)     AS pt_lastmodifieddate
+  CAST(t.lastmodifieddate AS DATETIME)     AS pt_lastmodifieddate,
+  CURRENT_DATETIME()                       AS etl_timestamp
 FROM ${ref("ext_PromotionTypes")} AS t
-LEFT JOIN config_agg AS c
-  ON t.id = c.promotiontypeid 
-
-pre_operations {
-  CALL
-    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['PromotionTypes'],
-      FALSE )
-}
-
-post_operations {
-  CALL
-    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['PromotionTypes'],
-      TRUE )
-}
-
+  LEFT JOIN config_agg AS c
+    ON t.id = c.promotiontypeid 
 
 /*
   ${when(incremental(),

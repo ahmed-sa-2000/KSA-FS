@@ -5,15 +5,30 @@ config {
     "assert_LookupInstallmentStatus_not_empty",
     "assert_LookupInstallmentSources_not_empty",
     "assert_ext_Installments_not_empty"
-  ]
+  ],
+  bigquery: {
+    clusterBy: ["installment_id", "status"]
+  }
     /*
       // uniqueKey: ["i_id"]
     */
 }
 
 
+pre_operations {
+  CALL
+    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['installments'],
+      FALSE )
+}
+
+post_operations {
+  CALL
+    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['installments'],
+      TRUE )
+}
+
 WITH installment_stg AS (
-    SELECT
+  SELECT
     id,
     programid,
     customerid ,
@@ -44,44 +59,31 @@ installment_sources_stg AS (
     FROM ${ref('LookupInstallmentSources')}
 )
 SELECT 
-    i.id AS i_id,
-    i.programid AS i_programid,
-    i.customerid AS i_customerid,
-    i.sourceid AS i_sourceid,
-    isg.name AS i_sourcename,
-    i.automationid AS i_automationid,
-    CAST(i.neededamount AS BIGNUMERIC) AS i_neededamount,
-    CAST(i.approvedamount AS BIGNUMERIC) AS i_approvedamount,
-    i.maxdbrcanexist AS i_maxdbrcanexist,
-    CAST(i.flaterate AS FLOAT64) AS i_flaterate,
-    CAST(i.maxmonthlyinstallmentcanpaid AS BIGNUMERIC) AS i_maxmonthly_installmentcanpaid,
-    i.score AS i_score,
-    i.maxtenormonths AS i_maxtenormonths,
-    CAST(i.downpaymentpercent AS FLOAT64) AS i_downpaymentpercent,
-    i.status AS i_status,
-    ist.name AS i_statusname,
-    i.createdby AS i_createdby,
-    CAST(i.createddate AS DATETIME) AS i_createddate,
-    i.lastmodifiedby AS i_lastmodifiedby,
-    CAST(i.lastmodifieddate AS DATETIME) AS i_lastmodifieddate,
+    i.id AS installment_id,
+    i.customerid AS customer_id,
+    i.sourceid AS source_id,
+    isg.name AS source_name,
+    i.status AS status,
+    ist.name AS status_name,
+    i.programid AS program_id,
+    i.automationid AS automation_id,
+    CAST(i.neededamount AS BIGNUMERIC) AS neededamount,
+    CAST(i.approvedamount AS BIGNUMERIC) AS approvedamount,
+    CAST(i.maxmonthlyinstallmentcanpaid AS BIGNUMERIC) AS maxmonthly_installmentcanpaid,
+    i.maxtenormonths AS maxtenormonths,
+    CAST(i.downpaymentpercent AS FLOAT64) AS downpaymentpercent,
+    i.score AS score,
+    i.maxdbrcanexist AS maxdbrcanexist,
+    CAST(i.flaterate AS FLOAT64) AS flaterate,
+    i.createdby AS created_by,
+    CAST(i.createddate AS DATETIME) AS created_date,
+    i.lastmodifiedby AS lastmodified_by,
+    CAST(i.lastmodifieddate AS DATETIME) AS lastmodified_date,
     CURRENT_DATETIME() AS etl_timestamp
 FROM installment_stg i
     LEFT JOIN installment_status_stg ist ON ist.id = i.status
     LEFT JOIN installment_sources_stg isg  ON isg.id = i.sourceid
 
-
-
-pre_operations {
-  CALL
-    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['Installments'],
-      FALSE )
-}
-
-post_operations {
-  CALL
-    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['Installments'],
-      TRUE )
-}
 
 /*
 ${when(incremental(),
