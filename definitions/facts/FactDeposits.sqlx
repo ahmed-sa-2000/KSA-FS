@@ -7,6 +7,7 @@ config {
         'assert_FactInstallmentDetails_not_empty'
     ],
     bigquery: {
+        partitionBy: "DATE(createddate)",
         clusterBy: ["deposit_id", "installmentdetails_id", "installment_id", "customer_id"]
     }
 

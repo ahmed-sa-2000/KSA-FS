@@ -10,6 +10,7 @@ config {
   ],
 
   bigquery: {
+    partitionBy: "DATE(mu_createddate)",
     clusterBy: ["mu_merchantid", "ds_storeid"]
   }
 }

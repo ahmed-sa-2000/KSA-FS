@@ -5,6 +5,7 @@ config {
         'assert_LookupInstallmentDetailsStatus_not_empty'
     ],
     bigquery: {
+        partitionBy: "DATE(createddate)",
         clusterBy: ["installmentdetails_id", "installment_id"]
     }    
 

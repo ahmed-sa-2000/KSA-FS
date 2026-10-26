@@ -6,6 +6,7 @@ config {
     ],
     
     bigquery: {
+      partitionBy: "DATE(pm_createddate)",
       clusterBy: ["pm_promoid, pm_merchantid"]
     }
 }

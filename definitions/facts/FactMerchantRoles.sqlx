@@ -5,6 +5,7 @@ config {
         'assert_DimMerchantUsers_not_empty'
     ],
     bigquery: {
+        partitionBy: "DATE(mr_createddate)",
         clusterBy: ["mr_merchantid", "mr_storeid", "mr_roleid"]
     }
     // uniqueKey: ["mr_id"]

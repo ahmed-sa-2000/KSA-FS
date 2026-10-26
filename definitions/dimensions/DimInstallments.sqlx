@@ -7,6 +7,7 @@ config {
     "assert_ext_Installments_not_empty"
   ],
   bigquery: {
+    partitionBy: "DATE(created_date)",
     clusterBy: ["installment_id", "status"]
   }
     /*
