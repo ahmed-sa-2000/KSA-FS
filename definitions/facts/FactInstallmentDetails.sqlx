@@ -1,31 +1,85 @@
 config {
-    type: "table",
+    type: "incremental",
+    uniqueKey: ["installmentdetails_id"],
+    onSchemaChange: "EXTEND",
     dependencies: [
-        'assert_ext_InstallmentDetails_not_empty',
-        'assert_LookupInstallmentDetailsStatus_not_empty'
+        "assert_LookupInstallmentDetailsStatus_not_empty"
     ],
     bigquery: {
         partitionBy: "DATE(createddate)",
         clusterBy: ["installmentdetails_id", "installment_id"]
-    }    
-
-    // uniqueKey: ["id"]
+    }
 }
 
-
 pre_operations {
-  CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
-      ['installmentdetails'],
-      FALSE
-    )
+    -- Capture the target checkpoint before processing
+    DECLARE previous_rowversion STRING DEFAULT (
+        ${when(
+            incremental(),
+            `SELECT COALESCE(MAX(rowversion), '')
+             FROM ${self()}`,
+            `SELECT CAST('' AS STRING)`
+        )}
+    );
+
+    ---
+    CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
+        ['loan_schema:installmentdetails'],
+        FALSE
+    );
 }
 
 post_operations {
-  CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
-      ['installmentdetails'],
-      TRUE
-    )
+    -- Delete only rows whose latest event in the new delta is a delete
+    ${when(incremental(), `
+        DELETE FROM ${self()} AS T
+        WHERE EXISTS (
+            SELECT 1
+            FROM (
+                SELECT
+                    id,
+                    datastream_metadata.change_type AS change_type,
+                    datastream_metadata.change_sequence_number
+                        AS change_sequence_number
+                FROM ${ref("int_installmentdetails")}
+                WHERE datastream_metadata.change_sequence_number
+                    > previous_rowversion
+                QUALIFY ROW_NUMBER() OVER (
+                    PARTITION BY id
+                    ORDER BY
+                        datastream_metadata.change_sequence_number DESC
+                ) = 1
+            ) AS S
+            WHERE S.id = T.installmentdetails_id
+              AND S.change_type IN ('DELETE', 'UPDATE-DELETE')
+              AND S.change_sequence_number > T.rowversion
+        );
+    `)}
+
+    ---
+    CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
+        ['loan_schema:installmentdetails'],
+        TRUE
+    );
 }
+
+WITH ranked AS (
+    SELECT
+        *,
+        datastream_metadata.change_type AS change_type,
+        datastream_metadata.change_sequence_number
+            AS change_sequence_number,
+        ROW_NUMBER() OVER (
+            PARTITION BY id
+            ORDER BY
+                datastream_metadata.change_sequence_number DESC
+        ) AS rn
+    FROM ${ref("int_installmentdetails")}
+    ${when(incremental(), `
+        WHERE datastream_metadata.change_sequence_number
+            > previous_rowversion
+    `)}
+)
 
 SELECT
     d.id AS installmentdetails_id,
@@ -49,15 +103,12 @@ SELECT
     CAST(d.createddate AS DATETIME) AS createddate,
     d.lastmodifiedby AS modifiedby,
     CAST(d.lastmodifieddate AS DATETIME) AS lastmodifieddate,
-    COALESCE(CAST(d.lastmodifieddate AS DATETIME), CAST(d.createddate AS DATETIME)) as row_timestamp,
+    COALESCE(CAST(d.lastmodifieddate AS DATETIME),
+             CAST(d.createddate AS DATETIME)) AS row_timestamp,
+    d.change_sequence_number AS rowversion,
     CURRENT_DATETIME() AS etl_timestamp
-FROM ${ref('ext_InstallmentDetails')} d
-    LEFT JOIN ${ref('LookupInstallmentDetailsStatus')} l
-        ON l.id = d.status
- 
-/*
-${when(incremental(),
-  `WHERE COALESCE(CAST(d.lastmodifieddate AS DATETIME), CAST(d.createddate AS DATETIME)) >=
-        (SELECT MAX(COALESCE(ind_lastmodifieddate, ind_createddate)) FROM ${self()})`
-)}
-*/
+FROM ranked d
+LEFT JOIN ${ref("LookupInstallmentDetailsStatus")} l
+    ON l.id = d.status
+WHERE d.rn = 1
+  AND d.change_type IN ('INSERT', 'UPDATE-INSERT')

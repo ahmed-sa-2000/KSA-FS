@@ -1,58 +1,112 @@
 config {
-    type: "table",
-
+    type: "incremental",
+    uniqueKey: ["p_promoid"],
+    onSchemaChange: "EXTEND",
     dependencies: [
-        "assert_ext_Promotions_not_empty",
         "assert_DimPromotionTypes_not_empty",
         "assert_LookupPromoStage_not_empty"
     ],
     bigquery: {
-      partitionBy: "DATE(p_createddate)",
-      clusterBy: ["p_promoid", "p_promocode"]
+        partitionBy: "DATE(p_createddate)",
+        clusterBy: ["p_promoid", "p_promocode"]
     }
 }
 
 pre_operations {
-  CALL
-    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['promotions'],
-      FALSE )
+    -- Capture the target checkpoint before processing
+    DECLARE previous_rowversion STRING DEFAULT (
+        ${when(
+            incremental(),
+            `SELECT COALESCE(MAX(rowversion), '')
+             FROM ${self()}`,
+            `SELECT CAST('' AS STRING)`
+        )}
+    );
+
+    ---
+    CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
+        ['promotion_schema:promotions'],
+        FALSE
+    );
 }
 
 post_operations {
-  CALL
-    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['promotions'],
-      TRUE )
+    -- Delete only promotions whose latest event in the new delta is a delete
+    ${when(incremental(), `
+        DELETE FROM ${self()} AS T
+        WHERE EXISTS (
+            SELECT 1
+            FROM (
+                SELECT
+                    id,
+                    datastream_metadata.change_type AS change_type,
+                    datastream_metadata.change_sequence_number
+                        AS change_sequence_number
+                FROM ${ref("int_promotions")}
+                WHERE datastream_metadata.change_sequence_number
+                    > previous_rowversion
+                QUALIFY ROW_NUMBER() OVER (
+                    PARTITION BY id
+                    ORDER BY
+                        datastream_metadata.change_sequence_number DESC
+                ) = 1
+            ) AS S
+            WHERE S.id = T.p_promoid
+              AND S.change_type IN ('DELETE', 'UPDATE-DELETE')
+              AND S.change_sequence_number > T.rowversion
+        );
+    `)}
+
+    ---
+    CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
+        ['promotion_schema:promotions'],
+        TRUE
+    );
 }
 
+WITH ranked AS (
+    SELECT
+        *,
+        datastream_metadata.change_type AS change_type,
+        datastream_metadata.change_sequence_number
+            AS change_sequence_number,
+        ROW_NUMBER() OVER (
+            PARTITION BY id
+            ORDER BY
+                datastream_metadata.change_sequence_number DESC
+        ) AS rn
+    FROM ${ref("int_promotions")}
+    ${when(incremental(), `
+        WHERE datastream_metadata.change_sequence_number
+            > previous_rowversion
+    `)}
+)
+
 SELECT
-  p.id                                    AS p_promoid,
-  p.promocode                             AS p_promocode,
-  p.promotionname                         AS p_promotionname,
-  p.promotypeid                           AS p_promotiontype_id,
-  t.pt_typecode,
-  t.pt_typename,
-  CAST(p.startdate AS DATETIME)           AS p_startdate,
-  CAST(p.enddate AS DATETIME)             AS p_enddate,
-  p.isactive                              AS p_isactive,
-  p.stage                                 AS p_stage,
-  ps.name                                 AS ps_stagename,
-  p.description                           AS p_description,
-  p.createdby                             AS p_createdby,
-  CAST(p.createddate AS DATETIME)         AS p_createddate,
-  p.lastmodifiedby                        AS p_lastmodifiedby,
-  CAST(p.lastmodifieddate AS DATETIME)    AS p_lastmodifieddate,
-  COALESCE(CAST(p.lastmodifieddate AS DATETIME), CAST(p.createddate AS DATETIME)) as row_timestamp,
-  CURRENT_DATETIME() AS etl_timestamp
-FROM ${ref("ext_Promotions")} AS p
-  LEFT JOIN ${ref("DimPromotionTypes")} AS t
+    p.id AS p_promoid,
+    p.promocode AS p_promocode,
+    p.promotionname AS p_promotionname,
+    p.promotypeid AS p_promotiontype_id,
+    t.pt_typecode,
+    t.pt_typename,
+    CAST(p.startdate AS DATETIME) AS p_startdate,
+    CAST(p.enddate AS DATETIME) AS p_enddate,
+    p.isactive AS p_isactive,
+    p.stage AS p_stage,
+    ps.name AS ps_stagename,
+    p.description AS p_description,
+    p.createdby AS p_createdby,
+    CAST(p.createddate AS DATETIME) AS p_createddate,
+    p.lastmodifiedby AS p_lastmodifiedby,
+    CAST(p.lastmodifieddate AS DATETIME) AS p_lastmodifieddate,
+    COALESCE(CAST(p.lastmodifieddate AS DATETIME),
+             CAST(p.createddate AS DATETIME)) AS row_timestamp,
+    p.change_sequence_number AS rowversion,
+    CURRENT_DATETIME() AS etl_timestamp
+FROM ranked AS p
+LEFT JOIN ${ref("DimPromotionTypes")} AS t
     ON p.promotypeid = t.pt_promotion_typeid
-  LEFT JOIN ${ref("LookupPromoStage")} AS ps
-  on p.stage = ps.id
-
-/*
-  ${when(incremental(),
-  `WHERE COALESCE(CAST(p.lastmodifieddate AS DATETIME), CAST(p.createddate AS DATETIME)) >=
-        (SELECT MAX(COALESCE(p_lastmodifieddate, p_createddate)) FROM ${self()})`
-)}
-*/
-
+LEFT JOIN ${ref("LookupPromoStage")} AS ps
+    ON p.stage = ps.id
+WHERE p.rn = 1
+  AND p.change_type IN ('INSERT', 'UPDATE-INSERT')

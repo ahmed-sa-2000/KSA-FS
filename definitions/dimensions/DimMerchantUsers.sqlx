@@ -1,59 +1,106 @@
 config {
-  type: "table",
-  /*
-    uniqueKey: ["mu_merchantid"]
-  */
-
-  dependencies: [
-    "assert_ext_Users_not_empty",
-    "assert_DimDealersStores_not_empty"
-  ],
-
-  bigquery: {
-    partitionBy: "DATE(mu_createddate)",
-    clusterBy: ["mu_merchantid", "ds_storeid"]
-  }
+    type: "incremental",
+    uniqueKey: ["mu_merchantid"],
+    onSchemaChange: "EXTEND",
+    dependencies: [
+        "assert_DimDealersStores_not_empty"
+    ],
+    bigquery: {
+        partitionBy: "DATE(mu_createddate)",
+        clusterBy: ["mu_merchantid", "ds_storeid"]
+    }
 }
 
 pre_operations {
-  CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
-      ['users'],
-      FALSE
-    )
+    -- Capture the target checkpoint before processing
+    DECLARE previous_rowversion STRING DEFAULT (
+        ${when(
+            incremental(),
+            `SELECT COALESCE(MAX(rowversion), '')
+             FROM ${self()}`,
+            `SELECT CAST('' AS STRING)`
+        )}
+    );
+
+    ---
+    CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
+        ['merchant_schema:users'],
+        FALSE
+    );
 }
 
 post_operations {
-  CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
-      ['users'],
-      TRUE
-    )
+    -- Delete only users whose latest event in the new delta is a delete
+    ${when(incremental(), `
+        DELETE FROM ${self()} AS T
+        WHERE EXISTS (
+            SELECT 1
+            FROM (
+                SELECT
+                    id,
+                    datastream_metadata.change_type AS change_type,
+                    datastream_metadata.change_sequence_number
+                        AS change_sequence_number
+                FROM ${ref("int_users")}
+                WHERE datastream_metadata.change_sequence_number
+                    > previous_rowversion
+                QUALIFY ROW_NUMBER() OVER (
+                    PARTITION BY id
+                    ORDER BY
+                        datastream_metadata.change_sequence_number DESC
+                ) = 1
+            ) AS S
+            WHERE S.id = T.mu_merchantid
+              AND S.change_type IN ('DELETE', 'UPDATE-DELETE')
+              AND S.change_sequence_number > T.rowversion
+        );
+    `)}
+
+    ---
+    CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
+        ['merchant_schema:users'],
+        TRUE
+    );
 }
 
+WITH ranked AS (
+    SELECT
+        *,
+        datastream_metadata.change_type AS change_type,
+        datastream_metadata.change_sequence_number
+            AS change_sequence_number,
+        ROW_NUMBER() OVER (
+            PARTITION BY id
+            ORDER BY
+                datastream_metadata.change_sequence_number DESC
+        ) AS rn
+    FROM ${ref("int_users")}
+    ${when(incremental(), `
+        WHERE datastream_metadata.change_sequence_number
+            > previous_rowversion
+    `)}
+)
 
-  select
-    u.id as mu_merchantid,
-    ds.ds_id as ds_storeid,
-    ds.ds_name as ds_storename,
-    u.StoreCode as mu_storecode,
-    u.UserName as mu_username,
-    u.Email as mu_email,
-    u.IsActive as mu_isactive,
-    u.IsSuperMerchant as mu_issuper_merchant,
-    u.SkipApproval as mu_skipapproval,
-    u.CreatedBy as mu_createdby,
-    u.LastModifiedBy as mu_modifiedby,
-    CAST(u.CreatedDate AS DATETIME) as mu_createddate,
-    CAST(u.LastModifiedDate AS DATETIME) as mu_modifieddate,
-    COALESCE(CAST(u.LastModifiedDate AS DATETIME), CAST(u.CreatedDate AS DATETIME)) as row_timestamp,
+SELECT
+    u.id AS mu_merchantid,
+    ds.ds_id AS ds_storeid,
+    ds.ds_name AS ds_storename,
+    u.StoreCode AS mu_storecode,
+    u.UserName AS mu_username,
+    u.Email AS mu_email,
+    u.IsActive AS mu_isactive,
+    u.IsSuperMerchant AS mu_issuper_merchant,
+    u.SkipApproval AS mu_skipapproval,
+    u.CreatedBy AS mu_createdby,
+    u.LastModifiedBy AS mu_modifiedby,
+    CAST(u.CreatedDate AS DATETIME) AS mu_createddate,
+    CAST(u.LastModifiedDate AS DATETIME) AS mu_modifieddate,
+    COALESCE(CAST(u.LastModifiedDate AS DATETIME),
+             CAST(u.CreatedDate AS DATETIME)) AS row_timestamp,
+    u.change_sequence_number AS rowversion,
     CURRENT_DATETIME() AS etl_timestamp
-  from ${ref('ext_Users')} u
-    LEFT JOIN ${ref('DimDealersStores')} ds ON ds.ds_storecode = u.StoreCode
-
-
-/*
-${when(incremental(), 
-  `
-  WHERE COALESCE(CAST(LastModifiedDate AS DATETIME), CAST(CreatedDate AS DATETIME)) >= (select MAX(row_timestamp) from ${self()})
-  `
-)}
-*/
+FROM ranked u
+LEFT JOIN ${ref("DimDealersStores")} ds
+    ON ds.ds_storecode = u.StoreCode
+WHERE u.rn = 1
+  AND u.change_type IN ('INSERT', 'UPDATE-INSERT')

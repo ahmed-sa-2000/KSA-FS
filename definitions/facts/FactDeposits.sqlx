@@ -1,34 +1,87 @@
 config {
-    type: "table",
+    type: "incremental",
+    uniqueKey: ["deposit_id"],
+    onSchemaChange: "EXTEND",
     dependencies: [
-        'assert_ext_Deposits_not_empty',
-        'assert_LookupDepositsTypes_not_empty',
-        'assert_LookupDepositsStatus_not_empty',
-        'assert_FactInstallmentDetails_not_empty'
+        "assert_LookupDepositsTypes_not_empty",
+        "assert_LookupDepositsStatus_not_empty",
+        "assert_FactInstallmentDetails_not_empty"
     ],
     bigquery: {
         partitionBy: "DATE(createddate)",
         clusterBy: ["deposit_id", "installmentdetails_id", "installment_id", "customer_id"]
     }
-
-    // uniqueKey: ["id"]
 }
 
-
 pre_operations {
-  CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
-      ['deposits'],
-      FALSE
-    )
+    -- Capture the target checkpoint before processing
+    DECLARE previous_rowversion STRING DEFAULT (
+        ${when(
+            incremental(),
+            `SELECT COALESCE(MAX(rowversion), '')
+             FROM ${self()}`,
+            `SELECT CAST('' AS STRING)`
+        )}
+    );
+
+    ---
+    CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
+        ['loan_schema:deposits'],
+        FALSE
+    );
 }
 
 post_operations {
-  CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
-      ['deposits'],
-      TRUE
-    )
+    -- Delete only deposits whose latest event in the new delta is a delete
+    ${when(incremental(), `
+        DELETE FROM ${self()} AS T
+        WHERE EXISTS (
+            SELECT 1
+            FROM (
+                SELECT
+                    id,
+                    datastream_metadata.change_type AS change_type,
+                    datastream_metadata.change_sequence_number
+                        AS change_sequence_number
+                FROM ${ref("int_deposits")}
+                WHERE datastream_metadata.change_sequence_number
+                    > previous_rowversion
+                QUALIFY ROW_NUMBER() OVER (
+                    PARTITION BY id
+                    ORDER BY
+                        datastream_metadata.change_sequence_number DESC
+                ) = 1
+            ) AS S
+            WHERE S.id = T.deposit_id
+              AND S.change_type IN ('DELETE', 'UPDATE-DELETE')
+              AND S.change_sequence_number > T.rowversion
+        );
+    `)}
+
+    ---
+    CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
+        ['loan_schema:deposits'],
+        TRUE
+    );
 }
 
+WITH ranked AS (
+    SELECT
+        *,
+        datastream_metadata.change_type AS change_type,
+        datastream_metadata.change_sequence_number
+            AS change_sequence_number,
+        ROW_NUMBER() OVER (
+            PARTITION BY id
+            ORDER BY
+                datastream_metadata.change_sequence_number DESC
+        ) AS rn
+    FROM ${ref("int_deposits")}
+    ${when(incremental(), `
+        WHERE datastream_metadata.change_sequence_number
+            > previous_rowversion
+    `)}
+)
 
 SELECT
     d.id AS deposit_id,
@@ -69,18 +122,16 @@ SELECT
     CAST(d.createddate AS DATETIME) AS createddate,
     d.lastmodifiedby AS modifiedby,
     CAST(d.lastmodifieddate AS DATETIME) AS lastmodifieddate,
-    COALESCE(CAST(d.lastmodifieddate AS DATETIME), CAST(d.createddate AS DATETIME)) as row_timestamp,
+    COALESCE(CAST(d.lastmodifieddate AS DATETIME),
+             CAST(d.createddate AS DATETIME)) AS row_timestamp,
+    d.change_sequence_number AS rowversion,
     CURRENT_DATETIME() AS etl_timestamp
-FROM ${ref('ext_Deposits')} d
-    LEFT JOIN ${ref('LookupDepositsTypes')} t
-        ON t.id = d.deposittype
-    LEFT JOIN ${ref('LookupDepositsStatus')} s
-        ON s.id = d.status
-    LEFT JOIN ${ref('FactInstallmentDetails')} ids
-        ON ids.installmentdetails_id = d.installmentdetailsid
-/*
-${when(incremental(),
-  `WHERE COALESCE(CAST(d.lastmodifieddate AS DATETIME), CAST(d.createddate AS DATETIME)) >=
-        (SELECT MAX(COALESCE(d_lastmodifieddate, d_createddate)) FROM ${self()})`
-)}
-*/
+FROM ranked d
+LEFT JOIN ${ref("LookupDepositsTypes")} t
+    ON t.id = d.deposittype
+LEFT JOIN ${ref("LookupDepositsStatus")} s
+    ON s.id = d.status
+LEFT JOIN ${ref("FactInstallmentDetails")} ids
+    ON ids.installmentdetails_id = d.installmentdetailsid
+WHERE d.rn = 1
+  AND d.change_type IN ('INSERT', 'UPDATE-INSERT')

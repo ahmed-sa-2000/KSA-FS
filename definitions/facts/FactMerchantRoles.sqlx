@@ -1,48 +1,108 @@
 config {
-    type: "table",
+    type: "incremental",
+    uniqueKey: ["mr_id"],
+    onSchemaChange: "EXTEND",
     dependencies: [
-        'assert_ext_MerchantRoles_not_empty',
-        'assert_DimMerchantUsers_not_empty'
+        "assert_DimMerchantUsers_not_empty"
     ],
     bigquery: {
         partitionBy: "DATE(mr_createddate)",
         clusterBy: ["mr_merchantid", "mr_storeid", "mr_roleid"]
     }
-    // uniqueKey: ["mr_id"]
 }
 
 pre_operations {
-  CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
-      ['merchantroles'],
-      FALSE
-    )
+    -- Capture the target checkpoint before processing
+    DECLARE previous_rowversion STRING DEFAULT (
+        ${when(
+            incremental(),
+            `SELECT COALESCE(MAX(rowversion), '')
+             FROM ${self()}`,
+            `SELECT CAST('' AS STRING)`
+        )}
+    );
+
+    ---
+    CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
+        ['merchant_schema:merchantroles'],
+        FALSE
+    );
 }
 
 post_operations {
-  CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
-      ['merchantroles'],
-      TRUE
-    )
+    -- Delete only merchant roles whose latest event in the new delta is a delete
+    ${when(incremental(), `
+        DELETE FROM ${self()} AS T
+        WHERE EXISTS (
+            SELECT 1
+            FROM (
+                SELECT
+                    id,
+                    datastream_metadata.change_type AS change_type,
+                    datastream_metadata.change_sequence_number
+                        AS change_sequence_number
+                FROM ${ref("int_merchantroles")}
+                WHERE datastream_metadata.change_sequence_number
+                    > previous_rowversion
+                QUALIFY ROW_NUMBER() OVER (
+                    PARTITION BY id
+                    ORDER BY
+                        datastream_metadata.change_sequence_number DESC
+                ) = 1
+            ) AS S
+            WHERE S.id = T.mr_id
+              AND S.change_type IN ('DELETE', 'UPDATE-DELETE')
+              AND S.change_sequence_number > T.rowversion
+        );
+    `)}
+
+    ---
+    CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
+        ['merchant_schema:merchantroles'],
+        TRUE
+    );
 }
 
-WITH merchant_roles_stg AS (
-    select 
-        id as mr_id,
-        MerchantId as mr_merchantid,
-        RoleId as mr_roleid,
-        IsActive as mr_isactive,
-        CreatedBy as mr_createdby,
-        LastModifiedBy as mr_modifiedby,
-        CAST(CreatedDate AS DATETIME) as mr_createddate,
-        CAST(LastModifiedDate AS DATETIME) as mr_modifieddate,
-        COALESCE(CAST(LastModifiedDate AS DATETIME), CAST(CreatedDate AS DATETIME)) as row_timestamp
-    FROM ${ref('ext_MerchantRoles')}
+WITH ranked AS (
+    SELECT
+        *,
+        datastream_metadata.change_type AS change_type,
+        datastream_metadata.change_sequence_number
+            AS change_sequence_number,
+        ROW_NUMBER() OVER (
+            PARTITION BY id
+            ORDER BY
+                datastream_metadata.change_sequence_number DESC
+        ) AS rn
+    FROM ${ref("int_merchantroles")}
+    ${when(incremental(), `
+        WHERE datastream_metadata.change_sequence_number
+            > previous_rowversion
+    `)}
+),
+merchant_roles_stg AS (
+    SELECT
+        id AS mr_id,
+        MerchantId AS mr_merchantid,
+        RoleId AS mr_roleid,
+        IsActive AS mr_isactive,
+        CreatedBy AS mr_createdby,
+        LastModifiedBy AS mr_modifiedby,
+        CAST(CreatedDate AS DATETIME) AS mr_createddate,
+        CAST(LastModifiedDate AS DATETIME) AS mr_modifieddate,
+        COALESCE(CAST(LastModifiedDate AS DATETIME),
+                 CAST(CreatedDate AS DATETIME)) AS row_timestamp,
+        change_sequence_number AS rowversion
+    FROM ranked
+    WHERE rn = 1
+      AND change_type IN ('INSERT', 'UPDATE-INSERT')
 ),
 merchants_stg AS (
     SELECT mu_merchantid, ds_storeid
-    FROM ${ref('DimMerchantUsers')}
+    FROM ${ref("DimMerchantUsers")}
 )
-SELECT 
+
+SELECT
     mrs.mr_id,
     mrs.mr_merchantid,
     ms.ds_storeid AS mr_storeid,
@@ -53,14 +113,8 @@ SELECT
     mrs.mr_createddate,
     mrs.mr_modifieddate,
     mrs.row_timestamp,
+    mrs.rowversion,
     CURRENT_DATETIME() AS etl_timestamp
 FROM merchant_roles_stg mrs
-    LEFT JOIN merchants_stg ms ON ms.mu_merchantid = mrs.mr_merchantid
-
-/*
-${when(incremental(), 
-  `
-  WHERE COALESCE(mrs.mr_modifieddate, mrs.mr_createddate) >= (select MAX(row_timestamp) from ${self()})
-  `
-)}
-*/
+LEFT JOIN merchants_stg ms
+    ON ms.mu_merchantid = mrs.mr_merchantid

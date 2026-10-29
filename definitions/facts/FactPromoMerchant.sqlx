@@ -1,44 +1,96 @@
 config {
-    type: "table",
-
-    dependencies: [
-        "assert_ext_PromoMerchants_not_empty",
-    ],
-    
+    type: "incremental",
+    uniqueKey: ["pm_id"],
+    onSchemaChange: "EXTEND",
     bigquery: {
-      partitionBy: "DATE(pm_createddate)",
-      clusterBy: ["pm_promoid, pm_merchantid"]
+        partitionBy: "DATE(pm_createddate)",
+        clusterBy: ["pm_promoid", "pm_merchantid"]
     }
 }
 
 pre_operations {
-  CALL
-    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['promomerchants'],
-      FALSE )
+    -- Capture the target checkpoint before processing
+    DECLARE previous_rowversion STRING DEFAULT (
+        ${when(
+            incremental(),
+            `SELECT COALESCE(MAX(rowversion), '')
+             FROM ${self()}`,
+            `SELECT CAST('' AS STRING)`
+        )}
+    );
+
+    ---
+    CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
+        ['promotion_schema:promomerchants'],
+        FALSE
+    );
 }
 
 post_operations {
-  CALL
-    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['promomerchants'],
-      TRUE )
+    -- Delete only promo-merchant rows whose latest event in the new delta is a delete
+    ${when(incremental(), `
+        DELETE FROM ${self()} AS T
+        WHERE EXISTS (
+            SELECT 1
+            FROM (
+                SELECT
+                    id,
+                    datastream_metadata.change_type AS change_type,
+                    datastream_metadata.change_sequence_number
+                        AS change_sequence_number
+                FROM ${ref("int_promomerchants")}
+                WHERE datastream_metadata.change_sequence_number
+                    > previous_rowversion
+                QUALIFY ROW_NUMBER() OVER (
+                    PARTITION BY id
+                    ORDER BY
+                        datastream_metadata.change_sequence_number DESC
+                ) = 1
+            ) AS S
+            WHERE S.id = T.pm_id
+              AND S.change_type IN ('DELETE', 'UPDATE-DELETE')
+              AND S.change_sequence_number > T.rowversion
+        );
+    `)}
+
+    ---
+    CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
+        ['promotion_schema:promomerchants'],
+        TRUE
+    );
 }
 
-SELECT
-  id           AS pm_id,
-  promoid      AS pm_promoid,
-  merchantid   AS pm_merchantid,
-  isactive     AS pm_isactive,
-  createdby                           AS pm_createdby,
-  CAST(createddate AS DATETIME)       AS pm_createddate,
-  lastmodifiedby                      AS pm_lastmodifiedby,
-  CAST(lastmodifieddate AS DATETIME)  AS pm_lastmodifieddate,
-  COALESCE(CAST(lastmodifieddate AS DATETIME), CAST(createddate AS DATETIME)) as row_timestamp,
-  CURRENT_DATETIME() AS etl_timestamp
-FROM ${ref("ext_PromoMerchants")}
+WITH ranked AS (
+    SELECT
+        *,
+        datastream_metadata.change_type AS change_type,
+        datastream_metadata.change_sequence_number
+            AS change_sequence_number,
+        ROW_NUMBER() OVER (
+            PARTITION BY id
+            ORDER BY
+                datastream_metadata.change_sequence_number DESC
+        ) AS rn
+    FROM ${ref("int_promomerchants")}
+    ${when(incremental(), `
+        WHERE datastream_metadata.change_sequence_number
+            > previous_rowversion
+    `)}
+)
 
-/*
-  ${when(incremental(),
-  `WHERE COALESCE(CAST(lastmodifieddate AS DATETIME), CAST(createddate AS DATETIME)) >=
-        (SELECT MAX(COALESCE(pm_lastmodifieddate, pm_createddate)) FROM ${self()})`
-)}
-*/
+SELECT
+    id AS pm_id,
+    promoid AS pm_promoid,
+    merchantid AS pm_merchantid,
+    isactive AS pm_isactive,
+    createdby AS pm_createdby,
+    CAST(createddate AS DATETIME) AS pm_createddate,
+    lastmodifiedby AS pm_lastmodifiedby,
+    CAST(lastmodifieddate AS DATETIME) AS pm_lastmodifieddate,
+    COALESCE(CAST(lastmodifieddate AS DATETIME),
+             CAST(createddate AS DATETIME)) AS row_timestamp,
+    change_sequence_number AS rowversion,
+    CURRENT_DATETIME() AS etl_timestamp
+FROM ranked
+WHERE rn = 1
+  AND change_type IN ('INSERT', 'UPDATE-INSERT')

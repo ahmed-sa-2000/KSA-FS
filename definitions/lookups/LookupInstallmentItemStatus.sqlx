@@ -1,8 +1,7 @@
 config {
     type: "table",
-    schema: "Lookups",
     dependencies: [
-        "assert_ext_InstallmentItemsStatusLookups_not_empty",
+        "assert_ext_installmentitemsstatuslookups_not_empty",
     ],
     bigquery: {
       clusterBy: ["id", "name"]
@@ -11,13 +10,13 @@ config {
 
 pre_operations {
   CALL
-    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['installmentitemsstatuslookups'],
+    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['loan_schema:installmentitemsstatuslookups'],
       FALSE )
 }
 
 post_operations {
   CALL
-    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['installmentitemsstatuslookups'],
+    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['loan_schema:installmentitemsstatuslookups'],
       TRUE )
 }
 
@@ -30,5 +29,5 @@ SELECT
   CAST(LastModifiedDate AS DATETIME) AS lastmodified_date,
   CURRENT_DATETIME() AS etl_timestamp
 FROM
-  ${ref('ext_InstallmentItemsStatusLookups')}
+  ${ref('ext_installmentitemsstatuslookups')}
 

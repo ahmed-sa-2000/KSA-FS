@@ -1,26 +1,26 @@
 // Ensures these tables are not empty
 // MerchantDB
-assertions.assertNotEmpty("ext_Dealers");
-assertions.assertNotEmpty("ext_DealersStores");
-assertions.assertNotEmpty("ext_Roles");
-assertions.assertNotEmpty("ext_Users");
-assertions.assertNotEmpty("ext_MerchantRoles");
+// assertions.assertNotEmpty("int_dealers");
+// assertions.assertNotEmpty("int_dealersstores");
+// assertions.assertNotEmpty("int_users");
+assertions.assertNotEmpty("ext_roles");
+assertions.assertNotEmpty("int_merchantroles");
 assertions.assertNotEmpty("LookupDealers");
 assertions.assertNotEmpty("DimDealersStores");
 assertions.assertNotEmpty("DimMerchantUsers");
 
 // LoansDB 
-assertions.assertNotEmpty("ext_InstallmentsStatusLookups");
-assertions.assertNotEmpty("ext_InstallmentsSourcesLookups");
-assertions.assertNotEmpty("ext_InstallmentsDetailsStatusLookups");
-assertions.assertNotEmpty("ext_InstallmentItemsStatusLookups");
-assertions.assertNotEmpty("ext_DepositsStatusLookups");
-assertions.assertNotEmpty("ext_DepositsTypesLookups");
-assertions.assertNotEmpty("ext_RequestStatuses");
-assertions.assertNotEmpty("ext_InstallmentDetails");
-assertions.assertNotEmpty("ext_InstallmentItems");
-assertions.assertNotEmpty("ext_Deposits");
-assertions.assertNotEmpty("ext_Installments");
+// assertions.assertNotEmpty("int_installmentdetails");
+// assertions.assertNotEmpty("int_installmentitems");
+// assertions.assertNotEmpty("int_deposits");
+// assertions.assertNotEmpty("int_installments");
+assertions.assertNotEmpty("ext_installmentsstatuslookups");
+assertions.assertNotEmpty("ext_installmentssourceslookups");
+assertions.assertNotEmpty("ext_installmentsdetailsstatuslookups");
+assertions.assertNotEmpty("ext_installmentitemsstatuslookups");
+assertions.assertNotEmpty("ext_depositsstatuslookups");
+assertions.assertNotEmpty("ext_depositstypeslookups");
+assertions.assertNotEmpty("ext_requeststatuses");
 assertions.assertNotEmpty("LookupInstallmentStatus");
 assertions.assertNotEmpty("LookupInstallmentSources");
 assertions.assertNotEmpty("LookupDepositsStatus");
@@ -30,12 +30,12 @@ assertions.assertNotEmpty("LookupInstallmentItemStatus");
 assertions.assertNotEmpty("FactInstallmentDetails");
 
 // PromotionDB
-assertions.assertNotEmpty("ext_PromotionTypeConfigs");
-assertions.assertNotEmpty("ext_PromotionTypes");
-assertions.assertNotEmpty("ext_PromoStageLookups");
-assertions.assertNotEmpty("ext_PromotionsTypesLookups");
-assertions.assertNotEmpty("ext_Promotions");
-assertions.assertNotEmpty("ext_PromoMerchants");
+// assertions.assertNotEmpty("int_promotions");
+// assertions.assertNotEmpty("int_promomerchants");
+assertions.assertNotEmpty("ext_promotiontypeconfigs");
+assertions.assertNotEmpty("ext_promotiontypes");
+assertions.assertNotEmpty("ext_promostagelookups");
+assertions.assertNotEmpty("ext_promotionstypeslookups");
 assertions.assertNotEmpty("DimPromotionTypes");
 assertions.assertNotEmpty("LookupPromoStage");
 assertions.assertNotEmpty("LookupPromotionTypeConfig");

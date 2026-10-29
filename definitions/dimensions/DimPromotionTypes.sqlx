@@ -2,7 +2,7 @@ config {
     type: "table",
 
     dependencies: [
-        "assert_ext_PromotionTypes_not_empty",
+        "assert_ext_promotiontypes_not_empty",
         "assert_LookupPromotionTypeConfig_not_empty"
     ],
     bigquery: {
@@ -12,13 +12,13 @@ config {
 
 pre_operations {
   CALL
-    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['promotiontypes'],
+    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['promotion_schema:promotiontypes'],
       FALSE )
 }
 
 post_operations {
   CALL
-    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['promotiontypes'],
+    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['promotion_schema:promotiontypes'],
       TRUE )
 }
 
@@ -51,7 +51,7 @@ SELECT
   t.lastmodifiedby                         AS pt_lastmodifiedby,
   CAST(t.lastmodifieddate AS DATETIME)     AS pt_lastmodifieddate,
   CURRENT_DATETIME()                       AS etl_timestamp
-FROM ${ref("ext_PromotionTypes")} AS t
+FROM ${ref("ext_promotiontypes")} AS t
   LEFT JOIN config_agg AS c
     ON t.id = c.promotiontypeid 
 

@@ -11,38 +11,38 @@
 
 
 const merchant_db_sources = [
-  "ext_Dealers",
-  "ext_DealersStores",
-  "ext_MerchantRoles",
-  "ext_Users",
-  "ext_RequestStatuses",
-  "ext_AdminRequests",
-  "ext_Roles",
-  "ext_MerchantApplications",
-  "ext_MerchantApplicationStatus",
+  "int_dealers",
+  "int_dealersstores",
+  "int_merchantroles",
+  "int_users",
+  "ext_requeststatuses",
+  "ext_adminrequests",
+  "ext_roles",
+  "ext_merchantapplications",
+  "ext_merchantapplicationstatus",
 ];
 
 const loans_db_sources = [
-    "ext_InstallmentsStatusLookups",
-    "ext_InstallmentsSourcesLookups",
-    "ext_InstallmentsDetailsStatusLookups",
-    "ext_InstallmentItemsStatusLookups",
-    "ext_DepositsStatusLookups",
-    "ext_DepositsTypesLookups",
-    "ext_PromoStageLookups",
-    "ext_PromotionsTypesLookups",
-    "ext_Installments",
-    "ext_InstallmentDetails",
-    "ext_InstallmentItems",
-    "ext_Deposits"
+    "ext_installmentsstatuslookups",
+    "ext_installmentssourceslookups",
+    "ext_installmentsdetailsstatuslookups",
+    "ext_installmentitemsstatuslookups",
+    "ext_depositsstatuslookups",
+    "ext_depositstypeslookups",
+    "ext_promostagelookups",
+    "ext_promotionstypeslookups",
+    "int_installments",
+    "int_installmentdetails",
+    "int_installmentitems",
+    "int_deposits"
 ];
 
 const promotion_db_sources = [
-    "ext_PromotionTypeConfigs",
-    "ext_PromotionTypes",
-    "ext_Promotions",
-    "ext_PromoMerchants"
-]
+    "ext_promotiontypeconfigs",
+    "ext_promotiontypes",
+    "int_promotions",
+    "int_promomerchants"
+];
 
 // Combine both arrays into a single list
 const allSources = [...merchant_db_sources, ...loans_db_sources, ...promotion_db_sources];
@@ -52,7 +52,7 @@ allSources
   .forEach((table) => {
     declare({
       database: "rifd-datascience-sa",
-      schema: "Staging_Tables",
+      schema: "aman_test",
       name: table,
     });
   });

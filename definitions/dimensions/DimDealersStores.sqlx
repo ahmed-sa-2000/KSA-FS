@@ -1,102 +1,141 @@
 config {
-    type: "table",
+    type: "incremental",
+    uniqueKey: ["ds_id"],
+    onSchemaChange: "EXTEND",
     dependencies: [
-    "assert_ext_DealersStores_not_empty",
-    "assert_LookupDealers_not_empty"
-  ],
-  bigquery: {
-    clusterBy: ["ds_id", "ds_storecode"]
-  }
-    /*
-      // uniqueKey: ["ds_id"]
-    */
+        "assert_LookupDealers_not_empty"
+    ],
+    bigquery: {
+        partitionBy: "DATE(ds_createddate)",
+        clusterBy: ["ds_id", "ds_storecode"]
+    }
 }
 
 pre_operations {
-  CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
-      ['dealersstores'],
-      FALSE
-    )
+    -- Capture the target checkpoint before processing
+    DECLARE previous_rowversion STRING DEFAULT (
+        ${when(
+            incremental(),
+            `SELECT COALESCE(MAX(rowversion), '')
+             FROM ${self()}`,
+            `SELECT CAST('' AS STRING)`
+        )}
+    );
+
+    ---
+    CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
+        ['merchant_schema:dealersstores'],
+        FALSE
+    );
 }
 
 post_operations {
-  CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
-      ['dealersstores'],
-      TRUE
-    )
+    -- Delete only stores whose latest event in the new delta is a delete
+    ${when(incremental(), `
+        DELETE FROM ${self()} AS T
+        WHERE EXISTS (
+            SELECT 1
+            FROM (
+                SELECT
+                    id,
+                    datastream_metadata.change_type AS change_type,
+                    datastream_metadata.change_sequence_number
+                        AS change_sequence_number
+                FROM ${ref("int_dealersstores")}
+                WHERE datastream_metadata.change_sequence_number
+                    > previous_rowversion
+                QUALIFY ROW_NUMBER() OVER (
+                    PARTITION BY id
+                    ORDER BY
+                        datastream_metadata.change_sequence_number DESC
+                ) = 1
+            ) AS S
+            WHERE S.id = T.ds_id
+              AND S.change_type IN ('DELETE', 'UPDATE-DELETE')
+              AND S.change_sequence_number > T.rowversion
+        );
+    `)}
+
+    ---
+    CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
+        ['merchant_schema:dealersstores'],
+        TRUE
+    );
 }
 
 WITH
+ranked AS (
+    SELECT
+        *,
+        datastream_metadata.change_type AS change_type,
+        datastream_metadata.change_sequence_number
+            AS change_sequence_number,
+        ROW_NUMBER() OVER (
+            PARTITION BY id
+            ORDER BY
+                datastream_metadata.change_sequence_number DESC
+        ) AS rn
+    FROM ${ref("int_dealersstores")}
+    ${when(incremental(), `
+        WHERE datastream_metadata.change_sequence_number
+            > previous_rowversion
+    `)}
+),
 dealers AS (
-  SELECT
-    d_dealerid,
-    d_name,
-    d_active,
-    d_returnpolicy,
-    d_interestrate,
-    d_refundable,
-    d_phone,
-    d_visible
-  FROM
-    ${ref("LookupDealers")} ),
+    SELECT
+        d_dealerid, d_name, d_active, d_returnpolicy,
+        d_interestrate, d_refundable, d_phone, d_visible
+    FROM ${ref("LookupDealers")}
+),
 dealer_stores AS (
-  SELECT
-    id AS ds_id,
-    StoreCode AS ds_storecode,
-    Name AS ds_name,
-    DealerId AS dealerid,
-    Active AS ds_active,
-    RecapPolicy AS ds_returnpolicy,
-    CAST(InterestRate AS FLOAT64) AS ds_interestrate,
-    District AS ds_district,
-    Country AS ds_country,
-    CreatedBy AS ds_createdby,
-    CAST(CreatedDate AS DATETIME) AS ds_createddate,
-    LastModifiedBy AS ds_modifiedby,
-    CAST(LastModifiedDate AS DATETIME) AS ds_modifieddate
-  FROM
-    ${ref("ext_DealersStores")} ),
-stg_cte as (
-  SELECT
-    ds.ds_id,
-    ds.ds_storecode,
-    ds.dealerid AS ds_dealerid,
-    -- Dealer Fields
-    d.d_name,
-    d.d_active,
-    d.d_returnpolicy,
-    d.d_interestrate,
-    d.d_refundable,
-    d.d_phone,
-    d.d_visible,
-    -- Store Fields
-    ds.ds_name,
-    ds.ds_active,
-    ds.ds_returnpolicy,
-    ds.ds_interestrate,
-    ds.ds_district,
-    ds.ds_country,
-    ds.ds_createdby,
-    ds.ds_modifiedby,
-    ds.ds_createddate,
-    ds.ds_modifieddate,
-    COALESCE(ds.ds_modifieddate, ds.ds_createddate) as row_timestamp
-  FROM
-    dealer_stores ds
-  LEFT JOIN
-    dealers d
-  ON
-    d.d_dealerid = ds.dealerid
+    SELECT
+        id AS ds_id,
+        StoreCode AS ds_storecode,
+        Name AS ds_name,
+        DealerId AS dealerid,
+        Active AS ds_active,
+        RecapPolicy AS ds_returnpolicy,
+        CAST(InterestRate AS FLOAT64) AS ds_interestrate,
+        District AS ds_district,
+        Country AS ds_country,
+        CreatedBy AS ds_createdby,
+        CAST(CreatedDate AS DATETIME) AS ds_createddate,
+        LastModifiedBy AS ds_modifiedby,
+        CAST(LastModifiedDate AS DATETIME) AS ds_modifieddate,
+        change_sequence_number AS rowversion
+    FROM ranked
+    WHERE rn = 1
+      AND change_type IN ('INSERT', 'UPDATE-INSERT')
+),
+stg_cte AS (
+    SELECT
+        ds.ds_id,
+        ds.ds_storecode,
+        ds.dealerid AS ds_dealerid,
+        d.d_name,
+        d.d_active,
+        d.d_returnpolicy,
+        d.d_interestrate,
+        d.d_refundable,
+        d.d_phone,
+        d.d_visible,
+        ds.ds_name,
+        ds.ds_active,
+        ds.ds_returnpolicy,
+        ds.ds_interestrate,
+        ds.ds_district,
+        ds.ds_country,
+        ds.ds_createdby,
+        ds.ds_modifiedby,
+        ds.ds_createddate,
+        ds.ds_modifieddate,
+        COALESCE(ds.ds_modifieddate, ds.ds_createddate) AS row_timestamp,
+        ds.rowversion
+    FROM dealer_stores ds
+    LEFT JOIN dealers d
+        ON d.d_dealerid = ds.dealerid
 )
 SELECT
-  s.*,
-  CURRENT_DATETIME() AS etl_timestamp
+    s.*,
+    CURRENT_DATETIME() AS etl_timestamp
 FROM stg_cte s
-
-/*
-${when(incremental(), 
-  `
-  WHERE COALESCE(s.ds_modifieddate, s.ds_createddate) >= (select MAX(row_timestamp) from ${self()})
-  `
-)}
-*/

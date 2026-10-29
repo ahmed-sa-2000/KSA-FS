@@ -1,8 +1,7 @@
 config {
     type: "table",
-    schema: "Lookups",
     dependencies: [
-      "assert_ext_RequestStatuses_not_empty",
+      "assert_ext_requeststatuses_not_empty",
     ],
     bigquery: {
       clusterBy: ["id", "name"]
@@ -11,14 +10,14 @@ config {
 
 pre_operations {
   CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
-      ['requeststatuses'],
+      ['merchant_schema:requeststatuses'],
       FALSE
     )
 }
 
 post_operations {
   CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
-      ['requeststatuses'],
+      ['merchant_schema:requeststatuses'],
       TRUE
     )
 }
@@ -29,4 +28,4 @@ select
   description,
   active,
   CURRENT_DATETIME() as etl_timestamp
-from ${ref('ext_RequestStatuses')}
+from ${ref('ext_requeststatuses')}

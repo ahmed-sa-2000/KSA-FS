@@ -1,7 +1,7 @@
 config {
     type: "table",
     dependencies: [
-      "assert_ext_Roles_not_empty",
+      "assert_ext_roles_not_empty",
     ],
     bigquery: {
       clusterBy: ["r_roleid", "r_rolename"]
@@ -10,14 +10,14 @@ config {
 
 pre_operations {
   CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
-      ['roles'],
+      ['merchant_schema:roles'],
       FALSE
     )
 }
 
 post_operations {
   CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
-      ['roles'],
+      ['merchant_schema:roles'],
       TRUE
     )
 }
@@ -30,4 +30,4 @@ select
   CAST(CreatedDate AS DATETIME) as r_createddate,
   CAST(LastModifiedDate AS DATETIME) as r_modifieddate,
   CURRENT_DATETIME() AS etl_timestamp
-from ${ref('ext_Roles')}
+from ${ref('ext_roles')}
