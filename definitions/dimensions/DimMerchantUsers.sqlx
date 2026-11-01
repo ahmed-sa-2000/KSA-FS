@@ -95,8 +95,6 @@ SELECT
     u.LastModifiedBy AS mu_modifiedby,
     CAST(u.CreatedDate AS DATETIME) AS mu_createddate,
     CAST(u.LastModifiedDate AS DATETIME) AS mu_modifieddate,
-    COALESCE(CAST(u.LastModifiedDate AS DATETIME),
-             CAST(u.CreatedDate AS DATETIME)) AS row_timestamp,
     u.change_sequence_number AS rowversion,
     CURRENT_DATETIME() AS etl_timestamp
 FROM ranked u

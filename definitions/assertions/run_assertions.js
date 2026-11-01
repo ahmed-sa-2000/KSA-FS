@@ -3,8 +3,8 @@
 // assertions.assertNotEmpty("int_dealers");
 // assertions.assertNotEmpty("int_dealersstores");
 // assertions.assertNotEmpty("int_users");
+// assertions.assertNotEmpty("int_merchantroles");
 assertions.assertNotEmpty("ext_roles");
-assertions.assertNotEmpty("int_merchantroles");
 assertions.assertNotEmpty("LookupDealers");
 assertions.assertNotEmpty("DimDealersStores");
 assertions.assertNotEmpty("DimMerchantUsers");

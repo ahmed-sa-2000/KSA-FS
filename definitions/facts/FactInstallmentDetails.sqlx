@@ -103,8 +103,6 @@ SELECT
     CAST(d.createddate AS DATETIME) AS createddate,
     d.lastmodifiedby AS modifiedby,
     CAST(d.lastmodifieddate AS DATETIME) AS lastmodifieddate,
-    COALESCE(CAST(d.lastmodifieddate AS DATETIME),
-             CAST(d.createddate AS DATETIME)) AS row_timestamp,
     d.change_sequence_number AS rowversion,
     CURRENT_DATETIME() AS etl_timestamp
 FROM ranked d
