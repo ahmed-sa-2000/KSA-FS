@@ -31,10 +31,13 @@ const loans_db_sources = [
     "ext_depositstypeslookups",
     "ext_promostagelookups",
     "ext_promotionstypeslookups",
+    "ext_purchaseordersourcelookups",
     "int_installments",
     "int_installmentdetails",
     "int_installmentitems",
-    "int_deposits"
+    "int_deposits", 
+    "int_purchaseorders",
+    "ext_purchaseorderstatuslookups"
 ];
 
 const promotion_db_sources = [

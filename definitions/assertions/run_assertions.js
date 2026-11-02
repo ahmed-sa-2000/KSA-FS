@@ -28,6 +28,8 @@ assertions.assertNotEmpty("LookupDepositsTypes");
 assertions.assertNotEmpty("LookupInstallmentDetailsStatus");
 assertions.assertNotEmpty("LookupInstallmentItemStatus");
 assertions.assertNotEmpty("FactInstallmentDetails");
+assertions.assertNotEmpty("ext_purchaseordersourcelookups");
+assertions.assertNotEmpty("ext_purchaseorderstatuslookups")
 
 // PromotionDB
 // assertions.assertNotEmpty("int_promotions");
