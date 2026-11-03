@@ -1,14 +1,3 @@
-// definitions/sources/declarations.js
-
-// ------------------ Empty tables ------------------
-//---- Merchant DB ------------
-// 1. ext_Banners (empty)
-// 2. ext_DealerReconciliations (ignore)
-
-
-//---- Loans DB ------------
-// 1.
-
 
 const merchant_db_sources = [
   "int_dealers",
@@ -31,10 +20,13 @@ const loans_db_sources = [
     "ext_depositstypeslookups",
     "ext_promostagelookups",
     "ext_promotionstypeslookups",
+    "ext_purchaseordersourcelookups",
+    "ext_purchaseorderstatuslookups",
     "int_installments",
     "int_installmentdetails",
     "int_installmentitems",
-    "int_deposits"
+    "int_deposits", 
+    "int_purchaseorders"
 ];
 
 const promotion_db_sources = [
@@ -44,15 +36,24 @@ const promotion_db_sources = [
     "int_promomerchants"
 ];
 
+
+const onboarding_db_sources = [
+    "ext_questioncategory",
+    "ext_questiontype",
+    "ext_question",
+    "ext_answeroption",
+    "int_customeranswerdetails"
+]
+
 // Combine both arrays into a single list
-const allSources = [...merchant_db_sources, ...loans_db_sources, ...promotion_db_sources];
+const allSources = [...merchant_db_sources, ...loans_db_sources, ...promotion_db_sources, ...onboarding_db_sources];
 
 allSources
   .filter(Boolean) // Drops any accidental empty strings, nulls, or undefined values
   .forEach((table) => {
     declare({
       database: "rifd-datascience-sa",
-      schema: "aman_test",
+      schema: "Staging_Tables",
       name: table,
     });
   });
