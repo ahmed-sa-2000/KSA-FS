@@ -21,7 +21,6 @@ post_operations {
 }
 
 SELECT
-
   id,
   typename AS type_name,
   typenamear AS type_namear,

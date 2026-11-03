@@ -21,7 +21,6 @@ post_operations {
 }
 
 SELECT
-
   id,
   categoryname AS category_name,
   categorynamear AS category_namear,
