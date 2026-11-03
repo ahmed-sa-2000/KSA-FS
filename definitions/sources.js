@@ -47,8 +47,17 @@ const promotion_db_sources = [
     "int_promomerchants"
 ];
 
+
+const onboarding_db_sources = [
+    "ext_questioncategory",
+    "ext_questiontype",
+    "ext_question",
+    "ext_answeroption",
+    "int_customeranswerdetails"
+]
+
 // Combine both arrays into a single list
-const allSources = [...merchant_db_sources, ...loans_db_sources, ...promotion_db_sources];
+const allSources = [...merchant_db_sources, ...loans_db_sources, ...promotion_db_sources, ...onboarding_db_sources];
 
 allSources
   .filter(Boolean) // Drops any accidental empty strings, nulls, or undefined values

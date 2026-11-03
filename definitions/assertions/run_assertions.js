@@ -29,7 +29,8 @@ assertions.assertNotEmpty("LookupInstallmentDetailsStatus");
 assertions.assertNotEmpty("LookupInstallmentItemStatus");
 assertions.assertNotEmpty("FactInstallmentDetails");
 assertions.assertNotEmpty("ext_purchaseordersourcelookups");
-assertions.assertNotEmpty("ext_purchaseorderstatuslookups")
+assertions.assertNotEmpty("ext_purchaseorderstatuslookups");
+
 
 // PromotionDB
 // assertions.assertNotEmpty("int_promotions");
@@ -41,3 +42,13 @@ assertions.assertNotEmpty("ext_promotionstypeslookups");
 assertions.assertNotEmpty("DimPromotionTypes");
 assertions.assertNotEmpty("LookupPromoStage");
 assertions.assertNotEmpty("LookupPromotionTypeConfig");
+
+
+// OnboardingDB
+
+assertions.assertNotEmpty("ext_questiontype");
+assertions.assertNotEmpty("ext_questioncategory");
+assertions.assertNotEmpty("ext_question");
+assertions.assertNotEmpty("LookupQuestionCategory");
+assertions.assertNotEmpty("LookupQuestionType");
+assertions.assertNotEmpty("ext_answeroption")
