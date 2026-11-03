@@ -1,0 +1,34 @@
+config {
+    type: "table",
+    schema: "Lookups",
+    dependencies: [
+        "assert_ext_purchaseordersourcelookups_not_empty",
+    ],
+    bigquery: {
+      clusterBy: ["id", "name"]
+    }
+}
+
+pre_operations {
+  CALL
+    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['loan_schema:purchaseordersourcelookups'],
+      FALSE )
+}
+
+post_operations {
+  CALL
+    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['loan_schema:purchaseordersourcelookups'],
+      TRUE )
+}
+
+SELECT
+  id,
+  name,
+  code,
+  createdBy AS created_by,
+  lastmodifiedby AS modified_by,
+  CAST(CreatedDate AS DATETIME) AS created_date,
+  CAST(LastModifiedDate AS DATETIME) AS lastmodified_date,
+  CURRENT_DATETIME() AS etl_timestamp
+FROM
+  ${ref('ext_purchaseordersourcelookups')}
