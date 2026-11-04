@@ -87,8 +87,6 @@ SELECT
     CAST(createddate AS DATETIME) AS pm_createddate,
     lastmodifiedby AS pm_lastmodifiedby,
     CAST(lastmodifieddate AS DATETIME) AS pm_lastmodifieddate,
-    COALESCE(CAST(lastmodifieddate AS DATETIME),
-             CAST(createddate AS DATETIME)) AS row_timestamp,
     change_sequence_number AS rowversion,
     CURRENT_DATETIME() AS etl_timestamp
 FROM ranked

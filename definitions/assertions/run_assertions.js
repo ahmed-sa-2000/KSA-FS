@@ -21,6 +21,8 @@ assertions.assertNotEmpty("ext_installmentitemsstatuslookups");
 assertions.assertNotEmpty("ext_depositsstatuslookups");
 assertions.assertNotEmpty("ext_depositstypeslookups");
 assertions.assertNotEmpty("ext_requeststatuses");
+assertions.assertNotEmpty("ext_purchaseordersourcelookups");
+assertions.assertNotEmpty("ext_purchaseorderstatuslookups");
 assertions.assertNotEmpty("LookupInstallmentStatus");
 assertions.assertNotEmpty("LookupInstallmentSources");
 assertions.assertNotEmpty("LookupDepositsStatus");
@@ -28,8 +30,10 @@ assertions.assertNotEmpty("LookupDepositsTypes");
 assertions.assertNotEmpty("LookupInstallmentDetailsStatus");
 assertions.assertNotEmpty("LookupInstallmentItemStatus");
 assertions.assertNotEmpty("FactInstallmentDetails");
-assertions.assertNotEmpty("ext_purchaseordersourcelookups");
-assertions.assertNotEmpty("ext_purchaseorderstatuslookups");
+assertions.assertNotEmpty("ext_applicationstatuslookups");
+assertions.assertNotEmpty("ext_accountstatuslookups")
+
+
 
 
 // PromotionDB
@@ -45,10 +49,13 @@ assertions.assertNotEmpty("LookupPromotionTypeConfig");
 
 
 // OnboardingDB
-
 assertions.assertNotEmpty("ext_questiontype");
 assertions.assertNotEmpty("ext_questioncategory");
 assertions.assertNotEmpty("ext_question");
+assertions.assertNotEmpty("ext_answeroption")
 assertions.assertNotEmpty("LookupQuestionCategory");
 assertions.assertNotEmpty("LookupQuestionType");
-assertions.assertNotEmpty("ext_answeroption")
+assertions.assertNotEmpty("ext_CustomerAddresses");
+assertions.assertNotEmpty("ext_natheerstatuslookups");
+assertions.assertNotEmpty("ext_customerstatuslookups");
+assertions.assertNotEmpty("ext_nafathstatuslookups");

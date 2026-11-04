@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 config {
     type: "table",
     dependencies: [
@@ -32,4 +33,40 @@ SELECT
   CAST(LastModifiedDate AS DATETIME) AS lastmodified_date,
   CURRENT_DATETIME() AS etl_timestamp
 FROM
+=======
+config {
+    type: "table",
+    schema: "Lookups",
+    dependencies: [
+        "assert_ext_questioncategory_not_empty",
+    ],
+    bigquery: {
+      clusterBy: ["id", "category_name"]
+    }
+}
+
+pre_operations {
+  CALL
+    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['onboarding_schema:questioncategory'],
+      FALSE )
+}
+
+post_operations {
+  CALL
+    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['onboarding_schema:questioncategory'],
+      TRUE )
+}
+
+SELECT
+  id,
+  categoryname AS category_name,
+  categorynamear AS category_namear,
+  isactive AS is_active ,
+  createdBy AS created_by,
+  lastmodifiedby AS modified_by,
+  CAST(CreatedDate AS DATETIME) AS created_date,
+  CAST(LastModifiedDate AS DATETIME) AS lastmodified_date,
+  CURRENT_DATETIME() AS etl_timestamp
+FROM
+>>>>>>> refs/heads/main
   ${ref('ext_questioncategory')}

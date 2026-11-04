@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 config {
     type: "incremental",
     uniqueKey: ["purchaseorder_id"],
@@ -125,4 +126,125 @@ LEFT JOIN ${ref("LookupPurchaseOrderStatus")} st
     ON st.id = p.status
 
 WHERE p.rn = 1
+=======
+config {
+    type: "incremental",
+    uniqueKey: ["purchaseorder_id"],
+    onSchemaChange: "EXTEND",
+    bigquery: {
+        partitionBy: "DATE(createddate)",
+        clusterBy: [
+            "purchaseorder_id",
+            "installment_id",
+            "customer_id",
+            "merchant_id"
+        ]
+    }
+}
+
+pre_operations {
+    -- Capture the target checkpoint before processing
+    DECLARE previous_rowversion STRING DEFAULT (
+        ${when(
+            incremental(),
+            `SELECT COALESCE(MAX(rowversion), '')
+             FROM ${self()}`,
+            `SELECT CAST('' AS STRING)`
+        )}
+    );
+
+    -- Process purchaseorders staging data
+    CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
+        ['loan_schema:purchaseorders'],
+        FALSE
+    );
+}
+
+post_operations {
+    -- Delete records whose latest event in the delta is a delete
+    ${when(incremental(), `
+        DELETE FROM ${self()} AS T
+        WHERE EXISTS (
+            SELECT 1
+            FROM (
+                SELECT
+                    id,
+                    datastream_metadata.change_type AS change_type,
+                    datastream_metadata.change_sequence_number
+                        AS change_sequence_number
+                FROM ${ref("int_purchaseorders")}
+                WHERE datastream_metadata.change_sequence_number
+                    > previous_rowversion
+                QUALIFY ROW_NUMBER() OVER (
+                    PARTITION BY id
+                    ORDER BY
+                        datastream_metadata.change_sequence_number DESC
+                ) = 1
+            ) AS S
+            WHERE S.id = T.purchaseorder_id
+              AND S.change_type IN ('DELETE', 'UPDATE-DELETE')
+              AND S.change_sequence_number > T.rowversion
+        );
+    `)}
+
+    -- Mark staging data as processed
+    CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
+        ['loan_schema:purchaseorders'],
+        TRUE
+    );
+}
+
+WITH ranked AS (
+    SELECT
+        *,
+        datastream_metadata.change_type AS change_type,
+        datastream_metadata.change_sequence_number
+            AS change_sequence_number,
+
+        ROW_NUMBER() OVER (
+            PARTITION BY id
+            ORDER BY
+                datastream_metadata.change_sequence_number DESC
+        ) AS rn
+
+    FROM ${ref("int_purchaseorders")}
+
+    ${when(incremental(), `
+        WHERE datastream_metadata.change_sequence_number
+            > previous_rowversion
+    `)}
+)
+
+SELECT
+    p.id AS purchaseorder_id,
+    p.installmentid AS installment_id, 
+    p.customerid AS customer_id, 
+    p.merchantid AS merchant_id,
+    p.branchid AS branch_id,
+    p.invoicenumber AS invoice_number,
+    p.sourceid AS source_id,
+    src.name AS source_name,
+    p.status AS status,
+    st.name AS status_name,
+    p.customermobile AS customer_mobile,
+    p.callbackurl AS callback_url,
+    CAST(p.installmentamount AS BIGNUMERIC) AS installment_amount,
+    CAST(p.downpayment AS BIGNUMERIC) AS downpayment,
+    CAST(p.totalamount AS BIGNUMERIC) AS total_amount,
+    CAST(p.upfrontpayment AS BIGNUMERIC) AS upfront_payment,
+    p.createdby AS createdby,
+    p.lastmodifiedby AS modifiedby,
+    CAST(p.createddate AS DATETIME) AS createddate,
+    CAST(p.lastmodifieddate AS DATETIME) AS lastmodifieddate,
+    p.change_sequence_number AS rowversion,
+    CURRENT_DATETIME() AS etl_timestamp
+
+FROM ranked p
+    LEFT JOIN ${ref("LookupPurchaseOrderSource")} src
+        ON src.id = p.sourceid
+    LEFT JOIN ${ref("LookupPurchaseOrderStatus")} st
+        ON st.id = p.status
+
+WHERE p.rn = 1
+>>>>>>> refs/heads/main
   AND p.change_type IN ('INSERT', 'UPDATE-INSERT')

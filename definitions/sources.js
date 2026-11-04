@@ -1,14 +1,3 @@
-// definitions/sources/declarations.js
-
-// ------------------ Empty tables ------------------
-//---- Merchant DB ------------
-// 1. ext_Banners (empty)
-// 2. ext_DealerReconciliations (ignore)
-
-
-//---- Loans DB ------------
-// 1.
-
 
 const merchant_db_sources = [
   "int_dealers",
@@ -32,12 +21,12 @@ const loans_db_sources = [
     "ext_promostagelookups",
     "ext_promotionstypeslookups",
     "ext_purchaseordersourcelookups",
+    "ext_purchaseorderstatuslookups",
     "int_installments",
     "int_installmentdetails",
     "int_installmentitems",
     "int_deposits", 
-    "int_purchaseorders",
-    "ext_purchaseorderstatuslookups"
+    "int_purchaseorders"
 ];
 
 const promotion_db_sources = [
@@ -53,7 +42,14 @@ const onboarding_db_sources = [
     "ext_questiontype",
     "ext_question",
     "ext_answeroption",
-    "int_customeranswerdetails"
+    "int_customeranswerdetails",
+    "int_customers",
+    "ext_CustomerAddresses",
+    "ext_applicationstatuslookups",
+    "ext_accountstatuslookups",
+    "ext_natheerstatuslookups",
+    "ext_customerstatuslookups",
+    "ext_nafathstatuslookups"
 ]
 
 // Combine both arrays into a single list

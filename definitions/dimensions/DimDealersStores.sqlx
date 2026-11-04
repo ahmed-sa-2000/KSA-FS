@@ -129,7 +129,6 @@ stg_cte AS (
         ds.ds_modifiedby,
         ds.ds_createddate,
         ds.ds_modifieddate,
-        COALESCE(ds.ds_modifieddate, ds.ds_createddate) AS row_timestamp,
         ds.rowversion
     FROM dealer_stores ds
     LEFT JOIN dealers d

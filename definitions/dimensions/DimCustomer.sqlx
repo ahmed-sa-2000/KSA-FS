@@ -1,0 +1,166 @@
+config {
+    type: "incremental",
+    uniqueKey: ["c_id"],
+    onSchemaChange: "EXTEND",
+    bigquery: {
+        partitionBy: "DATE(c_createddate)",
+        clusterBy: ["c_id"]
+    }
+}
+
+pre_operations {
+    DECLARE previous_rowversion STRING DEFAULT (
+        ${when(
+            incremental(),
+            `SELECT COALESCE(MAX(rowversion), '')
+             FROM ${self()}`,
+            `SELECT CAST('' AS STRING)`
+        )}
+    );
+
+    ---
+    CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
+        ['onboarding_schema:customers'],
+        FALSE
+    );
+}
+
+post_operations {
+    ${when(incremental(), `
+        DELETE FROM ${self()} AS T
+        WHERE EXISTS (
+            SELECT 1
+            FROM (
+                SELECT
+                    id,
+                    datastream_metadata.change_type AS change_type,
+                    datastream_metadata.change_sequence_number
+                        AS change_sequence_number
+                FROM ${ref("int_customers")}
+                WHERE datastream_metadata.change_sequence_number
+                    > previous_rowversion
+                QUALIFY ROW_NUMBER() OVER (
+                    PARTITION BY id
+                    ORDER BY
+                        datastream_metadata.change_sequence_number DESC
+                ) = 1
+            ) AS S
+            WHERE S.id = T.c_id
+              AND S.change_type IN ('DELETE', 'UPDATE-DELETE')
+              AND S.change_sequence_number > T.rowversion
+        );
+    `)}
+
+    ---
+    CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
+        ['onboarding_schema:customers'],
+        TRUE
+    );
+}
+
+WITH ranked AS (
+    SELECT
+        *,
+        datastream_metadata.change_type AS change_type,
+        datastream_metadata.change_sequence_number
+            AS change_sequence_number,
+        ROW_NUMBER() OVER (
+            PARTITION BY id
+            ORDER BY
+                datastream_metadata.change_sequence_number DESC
+        ) AS rn
+    FROM ${ref("int_customers")}
+    ${when(incremental(), `
+        WHERE datastream_metadata.change_sequence_number
+            > previous_rowversion
+    `)}
+)
+
+SELECT
+    c.id AS c_id,
+    c.idnumber AS c_idnumber,
+    c.userid AS c_userid,
+    c.personid AS c_personid,
+    c.transid AS c_transid,
+    c.firstname AS c_firstname,
+    c.middlename AS c_middlename,
+    c.lastname AS c_lastname,
+    c.familyname AS c_familyname,
+    c.fullname AS c_fullname,
+    c.englishfirstname AS c_englishfirstname,
+    c.englishsecondname AS c_englishsecondname,
+    c.englishthirdname AS c_englishthirdname,
+    c.englishlastname AS c_englishlastname,
+    c.mobilenumber AS c_mobilenumber,
+    DATE(c.dateofbirth) AS c_dateofbirth,
+    c.address AS c_address,
+    ca.regionname_ar AS ca_regionname_ar,
+    ca.regionname_en AS ca_regionname_en,
+    ca.city_ar AS ca_city_ar,
+    ca.city_en AS ca_city_en,
+    ca.district_ar AS ca_district_ar,
+    ca.district_en AS ca_district_en,
+    ca.streetname_ar AS ca_streetname_er,
+    ca.streetname_en AS ca_streetname_en,
+    ca.building_number AS ca_building_number,
+    ca.additional_number AS ca_additional_number,
+    ca.post_code AS ca_post_code,
+    ca.short_address AS ca_short_address,
+    c.gender AS c_gender,
+    c.isrecurring AS c_isrecurring,
+    c.deviceid AS c_deviceid,
+    c.applicationstatus AS c_applicationstatus,
+    ap.name AS ap_applicationstatus_name,
+    c.accountstatus AS c_accountstatus,
+    ac.name AS ac_accountstatus_name,
+    c.natheerstatus AS c_natheerstatus,
+    nt.name AS nt_natheerstatus_name,
+    c.customerstatus AS c_customerstatus,
+    cs.name AS cs_customerstatus_name,
+    c.temppass AS c_temppass,
+    c.iqamanumber AS c_iqamanumber,
+    c.nationalitycode AS c_nationalitycode,
+    c.nationality AS c_nationality,
+    DATE(c.idexpirydateg) AS c_idexpirydateg,
+    c.idexpirydateh AS c_idexpirydateh,
+    DATE(c.idissuedateg) AS c_idissuedateg,
+    c.idissuedateh AS c_idissuedateh,
+    c.idissueplace AS c_idissueplace,
+    c.idversionnumber AS c_idversionnumber,
+    c.nationaladdressjson AS c_nationaladdressjson,
+    c.nafathstatus AS c_nafathstatus,
+    c.createdby AS c_createdby,
+    CAST(c.createddate AS DATETIME) AS c_createddate,
+    c.lastmodifiedby AS c_lastmodifiedby,
+    CAST(c.lastmodifieddate AS DATETIME) AS c_lastmodifieddate,
+    c.isactive AS c_isactive,
+    c.nafathservicename AS c_nafathservicename,
+    c.occupationcode AS c_occupationcode,
+    c.receivelatestupdates AS c_receivelatestupdates,
+    c.socialstatuscode AS c_socialstatuscode,
+    c.socialstatusdesc AS c_socialstatusdesc,
+    c.totalnumberofcurrentdependents AS c_totalnumberofcurrentdependents,
+    c.benchmatrixaccountid AS c_benchmatrixaccountid,
+    c.benchmatrixaccountpushok AS c_benchmatrixaccountpushok,
+    c.benchmatrixcustomerpushok AS c_benchmatrixcustomerpushok,
+    c.benchmatrixmonthlyincome AS c_benchmatrixmonthlyincome,
+    CAST(c.benchmatrixpushlastattempt AS DATETIME) AS c_benchmatrixpushlastattempt,
+    c.benchmatrixpushlasterror AS c_benchmatrixpushlasterror,
+    c.complianceblockconfirmed AS c_complianceblockconfirmed,
+
+    c.change_sequence_number AS rowversion,
+    CURRENT_DATETIME() AS etl_timestamp
+FROM ranked AS c
+LEFT JOIN ${ref("LookupCustomerAddresses")} AS ca
+    ON ca.customer_id = c.id
+   AND ca.isprimary_address = TRUE
+LEFT JOIN ${ref("LookupApplicationStatus")} AS ap
+    ON ap.code = c.applicationstatus
+LEFT JOIN ${ref("LookupAccountStatus")} AS ac
+    ON ac.code = c.accountstatus
+LEFT JOIN ${ref("LookupNatheerStatus")} AS nt
+    ON nt.code = c.natheerstatus
+LEFT JOIN ${ref("LookupCustomerStatus")} AS cs
+    ON cs.code = c.customerstatus
+WHERE c.rn = 1
+  AND c.change_type IN ('INSERT', 'UPDATE-INSERT')

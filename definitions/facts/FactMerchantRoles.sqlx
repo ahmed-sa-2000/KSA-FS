@@ -90,8 +90,6 @@ merchant_roles_stg AS (
         LastModifiedBy AS mr_modifiedby,
         CAST(CreatedDate AS DATETIME) AS mr_createddate,
         CAST(LastModifiedDate AS DATETIME) AS mr_modifieddate,
-        COALESCE(CAST(LastModifiedDate AS DATETIME),
-                 CAST(CreatedDate AS DATETIME)) AS row_timestamp,
         change_sequence_number AS rowversion
     FROM ranked
     WHERE rn = 1
@@ -112,7 +110,6 @@ SELECT
     mrs.mr_modifiedby,
     mrs.mr_createddate,
     mrs.mr_modifieddate,
-    mrs.row_timestamp,
     mrs.rowversion,
     CURRENT_DATETIME() AS etl_timestamp
 FROM merchant_roles_stg mrs
