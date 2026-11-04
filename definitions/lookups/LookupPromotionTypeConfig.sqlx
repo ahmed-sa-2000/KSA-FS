@@ -1,6 +1,5 @@
 config {
     type: "table",
-    schema: "Lookups",
     dependencies: [
         "assert_ext_promotiontypeconfigs_not_empty",
         

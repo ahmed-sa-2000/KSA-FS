@@ -1,6 +1,5 @@
 config {
     type: "table",
-    schema: "Lookups",
     dependencies: [
         "assert_ext_installmentsdetailsstatuslookups_not_empty",
     ],

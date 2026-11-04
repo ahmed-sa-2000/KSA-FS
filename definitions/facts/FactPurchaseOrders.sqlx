@@ -7,9 +7,9 @@ config {
         partitionBy: "DATE(createddate)",
         clusterBy: [
             "purchaseorder_id",
+            "installment_id",
             "customer_id",
-            "merchant_id",
-            "branch_id"
+            "merchant_id"
         ]
     }
 }
@@ -89,41 +89,33 @@ WITH ranked AS (
 
 SELECT
     p.id AS purchaseorder_id,
-    p.installmentid AS installment_id,  
+    p.installmentid AS installment_id, 
+    p.customerid AS customer_id, 
     p.merchantid AS merchant_id,
     p.branchid AS branch_id,
+    p.invoicenumber AS invoice_number,
     p.sourceid AS source_id,
     src.name AS source_name,
-    p.customerid AS customer_id,
-    p.customermobile AS customer_mobile,
     p.status AS status,
     st.name AS status_name,
-
-    p.invoicenumber AS invoice_number,
+    p.customermobile AS customer_mobile,
     p.callbackurl AS callback_url,
     CAST(p.installmentamount AS BIGNUMERIC) AS installment_amount,
     CAST(p.downpayment AS BIGNUMERIC) AS downpayment,
     CAST(p.totalamount AS BIGNUMERIC) AS total_amount,
     CAST(p.upfrontpayment AS BIGNUMERIC) AS upfront_payment,
     p.createdby AS createdby,
-    CAST(p.createddate AS DATETIME) AS createddate,
     p.lastmodifiedby AS modifiedby,
+    CAST(p.createddate AS DATETIME) AS createddate,
     CAST(p.lastmodifieddate AS DATETIME) AS lastmodifieddate,
-    COALESCE(
-        CAST(p.lastmodifieddate AS DATETIME),
-        CAST(p.createddate AS DATETIME)
-    ) AS row_timestamp,
-
     p.change_sequence_number AS rowversion,
     CURRENT_DATETIME() AS etl_timestamp
 
 FROM ranked p
-
-LEFT JOIN ${ref("LookupPurchaseOrderSource")} src
-    ON src.id = p.sourceid
-
-LEFT JOIN ${ref("LookupPurchaseOrderStatus")} st
-    ON st.id = p.status
+    LEFT JOIN ${ref("LookupPurchaseOrderSource")} src
+        ON src.id = p.sourceid
+    LEFT JOIN ${ref("LookupPurchaseOrderStatus")} st
+        ON st.id = p.status
 
 WHERE p.rn = 1
 =======

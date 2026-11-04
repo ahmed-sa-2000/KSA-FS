@@ -1,6 +1,5 @@
 config {
     type: "incremental",
-    schema: "Lookups",
     uniqueKey: ["d_dealerid"],
     onSchemaChange: "EXTEND",
     bigquery: {

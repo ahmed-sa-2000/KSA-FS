@@ -87,16 +87,14 @@ WITH ranked AS (
 
 SELECT
     id AS cad_id,
-    questionid AS cad_questionid,
     customerid AS cad_customerid,
+    questionid AS cad_questionid,
     answervalue AS cad_answervalue,
-
     isactive AS cad_isactive,
     createdby AS cad_createdby,
-    CAST(createddate AS DATETIME) AS cad_createddate,
     lastmodifiedby AS cad_lastmodifiedby,
+    CAST(createddate AS DATETIME) AS cad_createddate,
     CAST(lastmodifieddate AS DATETIME) AS cad_lastmodifieddate,
-    
     change_sequence_number AS rowversion,
     CURRENT_DATETIME() AS etl_timestamp
 FROM ranked

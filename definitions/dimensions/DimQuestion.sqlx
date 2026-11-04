@@ -7,26 +7,24 @@ config {
     "assert_LookupQuestionType_not_empty",  
     ],
     bigquery: {
-        partitionBy: "DATE(q_createddate)",
+      partitionBy: "DATE(q_createddate)",
       clusterBy: ["id", "q_questiontypeid", "q_questioncategoryid"]
   }
 }
 
 pre_operations {
   CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
-      ['merchant_schema:question'],
+      ['onboarding_schema:question'],
       FALSE
     )
 }
 
 post_operations {
   CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
-      ['merchant_schema:question'],
+      ['onboarding_schema:question'],
       TRUE
     )
 }
-
-
 
 
 SELECT
@@ -40,16 +38,18 @@ SELECT
     q.inputtype AS q_inputtype,
     q.questiontypeid AS q_questiontypeid,
     qt.type_name AS qt_typename ,
-    q.isrequired AS q_isrequired,
-    q.displayorder AS q_displayorder,
     q.questioncategoryid AS q_questioncategoryid,
     qc.category_name AS qc_categoryname,
+    q.isrequired AS q_isrequired,
+    q.displayorder AS q_displayorder,
     q.isactive AS q_isactive ,
     q.createdby AS q_createdby,
-    CAST(q.createddate AS DATETIME) AS q_createddate,
     q.lastmodifiedby AS q_lastmodifiedby,
+    CAST(q.createddate AS DATETIME) AS q_createddate,
     CAST(q.lastmodifieddate AS DATETIME) AS q_lastmodifieddate,
+    CURRENT_DATETIME() AS etl_timestamp
 FROM ${ref("ext_question")} AS q
+<<<<<<< HEAD
 LEFT JOIN  ${ref("LookupQuestionType")} AS qt
 ON q.questiontypeid = qt.id
 LEFT JOIN ${ref("LookupQuestionCategory")} AS qc
@@ -108,3 +108,7 @@ FROM ${ref("ext_question")} AS q
   LEFT JOIN  ${ref("LookupQuestionType")} AS qt ON q.questiontypeid = qt.id
   LEFT JOIN ${ref("LookupQuestionCategory")} AS qc ON q.questioncategoryid = qc.id
 >>>>>>> refs/heads/main
+=======
+  LEFT JOIN  ${ref("LookupQuestionType")} AS qt ON q.questiontypeid = qt.id
+  LEFT JOIN ${ref("LookupQuestionCategory")} AS qc ON q.questioncategoryid = qc.id
+>>>>>>> refs/heads/dev-workspace
