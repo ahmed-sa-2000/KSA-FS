@@ -105,7 +105,7 @@ SELECT
     CURRENT_DATETIME() AS etl_timestamp
 FROM ranked i
 LEFT JOIN ${ref("LookupInstallmentItemStatus")} l
-    ON l.id = i.status
+    ON l.code = i.status
 LEFT JOIN ${ref("FactInstallmentDetails")} fid
     ON fid.installmentdetails_id = i.installmentdetailsid
 WHERE i.rn = 1

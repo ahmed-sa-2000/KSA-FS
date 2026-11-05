@@ -95,6 +95,7 @@ SELECT
     d.status AS status,
     s.name AS status_name,
     d.paymentmethod AS paymentmethod,
+    pm.name AS paymentmethod_name,
     d.depositenumber AS deposite_number,
     d.month AS month,
     d.adminfees AS adminfees,
@@ -126,10 +127,12 @@ SELECT
     CURRENT_DATETIME() AS etl_timestamp
 FROM ranked d
 LEFT JOIN ${ref("LookupDepositsTypes")} t
-    ON t.id = d.deposittype
+    ON t.code = d.deposittype
 LEFT JOIN ${ref("LookupDepositsStatus")} s
-    ON s.id = d.status
+    ON s.code = d.status
 LEFT JOIN ${ref("FactInstallmentDetails")} ids
     ON ids.installmentdetails_id = d.installmentdetailsid
+LEFT JOIN ${ref("LookupPaymentMethod")} pm 
+    ON pm.code = d.paymentmethod
 WHERE d.rn = 1
   AND d.change_type IN ('INSERT', 'UPDATE-INSERT')

@@ -105,6 +105,6 @@ FROM ranked AS p
 LEFT JOIN ${ref("DimPromotionTypes")} AS t
     ON p.promotypeid = t.pt_promotion_typeid
 LEFT JOIN ${ref("LookupPromoStage")} AS ps
-    ON p.stage = ps.id
+    ON p.stage = ps.code
 WHERE p.rn = 1
   AND p.change_type IN ('INSERT', 'UPDATE-INSERT')

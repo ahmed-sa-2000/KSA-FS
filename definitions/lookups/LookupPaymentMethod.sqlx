@@ -1,0 +1,33 @@
+config {
+    type: "table",
+    dependencies: [
+        "assert_ext_paymentmethodlookups_not_empty",
+    ],
+    bigquery: {
+        clusterBy: ["id", "name"]
+    }
+}
+
+SELECT
+  id,
+  code,
+  name,
+  createdby AS created_by,
+  CAST(createddate AS DATETIME) AS created_date,
+  lastmodifiedby AS last_modifiedby,
+  CAST(lastmodifieddate AS DATETIME) AS last_modifieddate,
+  CURRENT_DATETIME() AS etl_timestamp
+FROM
+  ${ref('ext_paymentmethodlookups')}
+
+pre_operations {
+  CALL
+    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['loan_schema:paymentmethodlookups'],
+      FALSE )
+}
+
+post_operations {
+  CALL
+    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['loan_schema:paymentmethodlookups'],
+      TRUE )
+}

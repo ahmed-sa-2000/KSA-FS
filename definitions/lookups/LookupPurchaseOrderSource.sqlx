@@ -22,8 +22,8 @@ post_operations {
 
 SELECT
   id,
-  name,
   code,
+  name,
   createdBy AS created_by,
   lastmodifiedby AS modified_by,
   CAST(CreatedDate AS DATETIME) AS created_date,

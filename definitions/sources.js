@@ -33,7 +33,8 @@ const promotion_db_sources = [
     "ext_promotiontypeconfigs",
     "ext_promotiontypes",
     "int_promotions",
-    "int_promomerchants"
+    "int_promomerchants",
+    "ext_paymentmethodlookups"
 ];
 
 

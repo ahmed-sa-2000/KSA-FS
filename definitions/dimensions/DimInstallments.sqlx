@@ -82,11 +82,11 @@ WITH installment_stg AS (
     `)}
 ),
 installment_status_stg AS (
-    SELECT id, name
+    SELECT code, name
     FROM ${ref("LookupInstallmentStatus")}
 ),
 installment_sources_stg AS (
-    SELECT id, name
+    SELECT code, name
     FROM ${ref("LookupInstallmentSources")}
 )
 
@@ -115,8 +115,8 @@ SELECT
     CURRENT_DATETIME() AS etl_timestamp
 FROM installment_stg i
 LEFT JOIN installment_status_stg ist
-    ON ist.id = i.status
+    ON ist.code = i.status
 LEFT JOIN installment_sources_stg isg
-    ON isg.id = i.sourceid
+    ON isg.code = i.sourceid
 WHERE i.rn = 1
   AND i.change_type IN ('INSERT', 'UPDATE-INSERT')

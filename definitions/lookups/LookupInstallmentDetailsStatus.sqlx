@@ -23,6 +23,7 @@ post_operations {
 
 SELECT
   id,
+  code,
   name,
   createdBy AS created_by,
   lastmodifiedby AS modified_by,

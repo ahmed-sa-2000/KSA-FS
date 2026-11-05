@@ -107,8 +107,4 @@ SELECT
 FROM ${ref("ext_question")} AS q
   LEFT JOIN  ${ref("LookupQuestionType")} AS qt ON q.questiontypeid = qt.id
   LEFT JOIN ${ref("LookupQuestionCategory")} AS qc ON q.questioncategoryid = qc.id
->>>>>>> refs/heads/main
-=======
-  LEFT JOIN  ${ref("LookupQuestionType")} AS qt ON q.questiontypeid = qt.id
-  LEFT JOIN ${ref("LookupQuestionCategory")} AS qc ON q.questioncategoryid = qc.id
->>>>>>> refs/heads/dev-workspace
+
