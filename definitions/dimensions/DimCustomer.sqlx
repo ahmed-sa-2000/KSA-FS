@@ -1,5 +1,12 @@
 config {
     type: "incremental",
+    dependencies: [
+      "assert_LookupCustomerAddresses_not_empty",
+      "assert_LookupApplicationStatus_not_empty",
+      "assert_LookupAccountStatus_not_empty",
+      "assert_LookupNatheerStatus_not_empty",
+      "assert_LookupCustomerStatus_not_empty"
+    ],
     uniqueKey: ["c_id"],
     onSchemaChange: "EXTEND",
     bigquery: {
@@ -19,7 +26,7 @@ pre_operations {
     );
 
     ---
-    CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
+    CALL `rifd-datascience-sa.Staging_Tables.update_watermark_with_retry`(
         ['onboarding_schema:customers'],
         FALSE
     );
@@ -52,7 +59,7 @@ post_operations {
     `)}
 
     ---
-    CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
+    CALL `rifd-datascience-sa.Staging_Tables.update_watermark_with_retry`(
         ['onboarding_schema:customers'],
         TRUE
     );

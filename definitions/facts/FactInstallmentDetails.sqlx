@@ -23,7 +23,7 @@ pre_operations {
     );
 
     ---
-    CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
+    CALL `rifd-datascience-sa.Staging_Tables.update_watermark_with_retry`(
         ['loan_schema:installmentdetails'],
         FALSE
     );
@@ -57,7 +57,7 @@ post_operations {
     `)}
 
     ---
-    CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
+    CALL `rifd-datascience-sa.Staging_Tables.update_watermark_with_retry`(
         ['loan_schema:installmentdetails'],
         TRUE
     );

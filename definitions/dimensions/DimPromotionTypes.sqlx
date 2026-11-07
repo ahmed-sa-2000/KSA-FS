@@ -12,13 +12,13 @@ config {
 
 pre_operations {
   CALL
-    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['promotion_schema:promotiontypes'],
+    `rifd-datascience-sa.Staging_Tables.update_watermark_with_retry`( ['promotion_schema:promotiontypes'],
       FALSE )
 }
 
 post_operations {
   CALL
-    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['promotion_schema:promotiontypes'],
+    `rifd-datascience-sa.Staging_Tables.update_watermark_with_retry`( ['promotion_schema:promotiontypes'],
       TRUE )
 }
 

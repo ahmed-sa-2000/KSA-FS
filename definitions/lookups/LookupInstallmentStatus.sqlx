@@ -1,5 +1,6 @@
 config {
     type: "table",
+    schema: "Lookups",
     dependencies: [
         "assert_ext_installmentsstatuslookups_not_empty",
     ],
@@ -10,13 +11,13 @@ config {
 
 pre_operations {
   CALL
-    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['loan_schema:installmentsstatuslookups'],
+    `rifd-datascience-sa.Staging_Tables.update_watermark_with_retry`( ['loan_schema:installmentsstatuslookups'],
       FALSE )
 }
 
 post_operations {
   CALL
-    `rifd-datascience-sa.aman_test.update_watermark_with_retry`( ['loan_schema:installmentsstatuslookups'],
+    `rifd-datascience-sa.Staging_Tables.update_watermark_with_retry`( ['loan_schema:installmentsstatuslookups'],
       TRUE )
 }
 

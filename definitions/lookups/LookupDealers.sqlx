@@ -1,5 +1,6 @@
 config {
     type: "incremental",
+    schema: "Lookups",
     uniqueKey: ["d_dealerid"],
     onSchemaChange: "EXTEND",
     bigquery: {
@@ -20,7 +21,7 @@ pre_operations {
     );
 
     ---
-    CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
+    CALL `rifd-datascience-sa.Staging_Tables.update_watermark_with_retry`(
         ['merchant_schema:dealers'],
         FALSE
     );
@@ -55,7 +56,7 @@ post_operations {
 
     ---
     -- Mark watermark processing as completed
-    CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
+    CALL `rifd-datascience-sa.Staging_Tables.update_watermark_with_retry`(
         ['merchant_schema:dealers'],
         TRUE
     );

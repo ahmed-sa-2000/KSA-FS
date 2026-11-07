@@ -12,14 +12,14 @@ config {
 }
 
 pre_operations {
-  CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
+  CALL `rifd-datascience-sa.Staging_Tables.update_watermark_with_retry`(
       ['onboarding_schema:question'],
       FALSE
     )
 }
 
 post_operations {
-  CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
+  CALL `rifd-datascience-sa.Staging_Tables.update_watermark_with_retry`(
       ['onboarding_schema:question'],
       TRUE
     )

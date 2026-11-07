@@ -9,14 +9,14 @@ config {
 }
 
 pre_operations {
-  CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
+  CALL `rifd-datascience-sa.Staging_Tables.update_watermark_with_retry`(
       ['merchant_schema:roles'],
       FALSE
     )
 }
 
 post_operations {
-  CALL `rifd-datascience-sa.aman_test.update_watermark_with_retry`(
+  CALL `rifd-datascience-sa.Staging_Tables.update_watermark_with_retry`(
       ['merchant_schema:roles'],
       TRUE
     )
