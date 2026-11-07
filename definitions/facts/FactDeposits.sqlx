@@ -5,7 +5,8 @@ config {
     dependencies: [
         "assert_LookupDepositsTypes_not_empty",
         "assert_LookupDepositsStatus_not_empty",
-        "assert_FactInstallmentDetails_not_empty"
+        "assert_FactInstallmentDetails_not_empty",
+        "assert_LookupPaymentMethod_not_empty"
     ],
     bigquery: {
         partitionBy: "DATE(createddate)",

@@ -30,6 +30,7 @@ assertions.assertNotEmpty("LookupDepositsStatus");
 assertions.assertNotEmpty("LookupDepositsTypes");
 assertions.assertNotEmpty("LookupInstallmentDetailsStatus");
 assertions.assertNotEmpty("LookupInstallmentItemStatus");
+assertions.assertNotEmpty("LookupPaymentMethod");
 assertions.assertNotEmpty("FactInstallmentDetails");
 
 
