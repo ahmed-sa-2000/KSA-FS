@@ -109,13 +109,13 @@ SELECT
     c.gender AS c_gender,
     c.isrecurring AS c_isrecurring,
     c.deviceid AS c_deviceid,
-    c.applicationstatus AS c_applicationstatus,
+    c.applicationstatus AS c_applicationstatus_code,
     ap.name AS ap_applicationstatus_name,
-    c.accountstatus AS c_accountstatus,
+    c.accountstatus AS c_accountstatus_code,
     ac.name AS ac_accountstatus_name,
-    c.natheerstatus AS c_natheerstatus,
+    c.natheerstatus AS c_natheerstatus_code,
     nt.name AS nt_natheerstatus_name,
-    c.customerstatus AS c_customerstatus,
+    c.customerstatus AS c_customerstatus_code,
     cs.name AS cs_customerstatus_name,
     c.temppass AS c_temppass,
     c.iqamanumber AS c_iqamanumber,
@@ -151,16 +151,16 @@ SELECT
     c.change_sequence_number AS rowversion,
     CURRENT_DATETIME() AS etl_timestamp
 FROM ranked AS c
-LEFT JOIN ${ref("LookupCustomerAddresses")} AS ca
-    ON ca.customer_id = c.id
-   AND ca.isprimary_address = TRUE
-LEFT JOIN ${ref("LookupApplicationStatus")} AS ap
-    ON ap.code = c.applicationstatus
-LEFT JOIN ${ref("LookupAccountStatus")} AS ac
-    ON ac.code = c.accountstatus
-LEFT JOIN ${ref("LookupNatheerStatus")} AS nt
-    ON nt.code = c.natheerstatus
-LEFT JOIN ${ref("LookupCustomerStatus")} AS cs
-    ON cs.code = c.customerstatus
+    LEFT JOIN ${ref("LookupCustomerAddresses")} AS ca
+        ON ca.customer_id = c.id
+        AND ca.isprimary_address = TRUE
+    LEFT JOIN ${ref("LookupApplicationStatus")} AS ap
+        ON ap.code = c.applicationstatus
+    LEFT JOIN ${ref("LookupAccountStatus")} AS ac
+        ON ac.code = c.accountstatus
+    LEFT JOIN ${ref("LookupNatheerStatus")} AS nt
+        ON nt.code = c.natheerstatus
+    LEFT JOIN ${ref("LookupCustomerStatus")} AS cs
+        ON cs.code = c.customerstatus
 WHERE c.rn = 1
   AND c.change_type IN ('INSERT', 'UPDATE-INSERT')

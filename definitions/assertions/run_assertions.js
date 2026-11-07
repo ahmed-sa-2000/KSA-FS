@@ -23,6 +23,7 @@ assertions.assertNotEmpty("ext_depositstypeslookups");
 assertions.assertNotEmpty("ext_requeststatuses");
 assertions.assertNotEmpty("ext_purchaseordersourcelookups");
 assertions.assertNotEmpty("ext_purchaseorderstatuslookups");
+assertions.assertNotEmpty("ext_paymentmethodlookups")
 assertions.assertNotEmpty("LookupInstallmentStatus");
 assertions.assertNotEmpty("LookupInstallmentSources");
 assertions.assertNotEmpty("LookupDepositsStatus");
@@ -30,7 +31,7 @@ assertions.assertNotEmpty("LookupDepositsTypes");
 assertions.assertNotEmpty("LookupInstallmentDetailsStatus");
 assertions.assertNotEmpty("LookupInstallmentItemStatus");
 assertions.assertNotEmpty("FactInstallmentDetails");
-assertions.assertNotEmpty("ext_paymentmethodlookups")
+
 
 
 

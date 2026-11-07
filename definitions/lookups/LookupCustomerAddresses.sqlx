@@ -25,7 +25,6 @@ post_operations {
 SELECT
   id,
   customerid AS customer_id,
-
   
   regionid AS region_id,
   regionname AS regionname_ar,

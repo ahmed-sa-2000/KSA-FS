@@ -95,7 +95,7 @@ SELECT
     CAST(i.price AS BIGNUMERIC) AS price,
     i.quantity AS quantity,
     i.refundedquantity AS refunded_quantity,
-    i.status AS status,
+    i.status AS status_code,
     l.name AS status_name,
     i.createdby AS createdby,
     CAST(i.createddate AS DATETIME) AS createddate,

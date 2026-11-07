@@ -90,7 +90,7 @@ SELECT
     d.merchantid AS merchant_id,
     d.branchid AS branch_id,
     d.sourceid AS source_id,
-    d.status AS status_id,
+    d.status AS status_code,
     l.name AS status_name,
     d.months AS tenor_months,
     CAST(d.adminfees AS BIGNUMERIC) AS adminfees,
