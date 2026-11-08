@@ -23,12 +23,11 @@ pre_operations {
     );
 
     ---
-    /*
-    CALL `rifd-datascience-sa.Staging_Tables.update_watermark_with_retry`(
-        ['merchant_schema:merchantroles'],
-        FALSE
-    );
-    */
+    --CALL `rifd-datascience-sa.Staging_Tables.update_watermark_with_retry`(
+    --    ['merchant_schema:merchantroles'],
+    --    FALSE
+    --);
+    
 }
 
 post_operations {
@@ -59,12 +58,10 @@ post_operations {
     `)}
 
     ---
-    /*
-    CALL `rifd-datascience-sa.Staging_Tables.update_watermark_with_retry`(
-        ['merchant_schema:merchantroles'],
-        TRUE
-    );
-    */
+    --CALL `rifd-datascience-sa.Staging_Tables.update_watermark_with_retry`(
+    --    ['merchant_schema:merchantroles'],
+    --    TRUE
+    --);
 }
 
 WITH ranked AS (

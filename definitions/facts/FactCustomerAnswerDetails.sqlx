@@ -25,12 +25,12 @@ pre_operations {
 
     -- Mark watermark processing as started
     ---
-    /*
-    CALL `rifd-datascience-sa.Staging_Tables.update_watermark_with_retry`(
-        ['onboarding_schema:customeranswerdetails'],
-        FALSE
-    );
-    */
+    
+    --CALL `rifd-datascience-sa.Staging_Tables.update_watermark_with_retry`(
+    --    ['onboarding_schema:customeranswerdetails'],
+    --    FALSE
+    --);
+    
 }
 
 post_operations {
@@ -62,12 +62,12 @@ post_operations {
 
     ---
     -- Mark watermark processing as completed
-    /*
-    CALL `rifd-datascience-sa.Staging_Tables.update_watermark_with_retry`(
-        ['onboarding_schema:customeranswerdetails'],
-        TRUE
-    );
-    */
+    
+    --CALL `rifd-datascience-sa.Staging_Tables.update_watermark_with_retry`(
+    --    ['onboarding_schema:customeranswerdetails'],
+    --    TRUE
+    --);
+    
 }
 
 WITH ranked AS (

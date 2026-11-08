@@ -24,12 +24,10 @@ pre_operations {
     );
 
     ---
-    /*
-    CALL `rifd-datascience-sa.Staging_Tables.update_watermark_with_retry`(
-        ['loan_schema:installmentitems'],
-        FALSE
-    );
-    */
+    --CALL `rifd-datascience-sa.Staging_Tables.update_watermark_with_retry`(
+    --    ['loan_schema:installmentitems'],
+    --    FALSE
+    --);
 }
 
 post_operations {
@@ -60,12 +58,10 @@ post_operations {
     `)}
 
     ---
-    /*
-    CALL `rifd-datascience-sa.Staging_Tables.update_watermark_with_retry`(
-        ['loan_schema:installmentitems'],
-        TRUE
-    );
-    */
+    --CALL `rifd-datascience-sa.Staging_Tables.update_watermark_with_retry`(
+    --    ['loan_schema:installmentitems'],
+    --    TRUE
+    --);
 }
 
 WITH ranked AS (

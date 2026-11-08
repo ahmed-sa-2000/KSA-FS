@@ -26,12 +26,10 @@ pre_operations {
     );
 
     ---
-    /*
-    CALL `rifd-datascience-sa.Staging_Tables.update_watermark_with_retry`(
-        ['onboarding_schema:customers'],
-        FALSE
-    );
-    */
+    --CALL `rifd-datascience-sa.Staging_Tables.update_watermark_with_retry`(
+    --    ['onboarding_schema:customers'],
+    --    FALSE
+    --);
 }
 
 post_operations {
@@ -61,12 +59,10 @@ post_operations {
     `)}
 
     ---
-    /*
-    CALL `rifd-datascience-sa.Staging_Tables.update_watermark_with_retry`(
-        ['onboarding_schema:customers'],
-        TRUE
-    );
-    */
+    --CALL `rifd-datascience-sa.Staging_Tables.update_watermark_with_retry`(
+    --    ['onboarding_schema:customers'],
+    --    TRUE
+    --);
 }
 
 WITH ranked AS (

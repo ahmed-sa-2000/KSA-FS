@@ -23,12 +23,10 @@ pre_operations {
     );
 
     ---
-    /*
-    CALL `rifd-datascience-sa.Staging_Tables.update_watermark_with_retry`(
-        ['merchant_schema:dealersstores'],
-        FALSE
-    );
-    */
+    --CALL `rifd-datascience-sa.Staging_Tables.update_watermark_with_retry`(
+    --    ['merchant_schema:dealersstores'],
+    --    FALSE
+    --);
 }
 
 post_operations {
@@ -59,12 +57,10 @@ post_operations {
     `)}
 
     ---
-    /*
-    CALL `rifd-datascience-sa.Staging_Tables.update_watermark_with_retry`(
-        ['merchant_schema:dealersstores'],
-        TRUE
-    );
-    */
+    --CALL `rifd-datascience-sa.Staging_Tables.update_watermark_with_retry`(
+    --    ['merchant_schema:dealersstores'],
+    --    TRUE
+    --);
 }
 
 WITH

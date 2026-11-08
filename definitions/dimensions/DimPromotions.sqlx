@@ -24,12 +24,10 @@ pre_operations {
     );
 
     ---
-    /*
-    CALL `rifd-datascience-sa.Staging_Tables.update_watermark_with_retry`(
-        ['promotion_schema:promotions'],
-        FALSE
-    );
-    */
+    --CALL `rifd-datascience-sa.Staging_Tables.update_watermark_with_retry`(
+    --    ['promotion_schema:promotions'],
+    --    FALSE
+    --);
 }
 
 post_operations {
@@ -60,12 +58,10 @@ post_operations {
     `)}
 
     ---
-    /*
-    CALL `rifd-datascience-sa.Staging_Tables.update_watermark_with_retry`(
-        ['promotion_schema:promotions'],
-        TRUE
-    );
-    */
+    --CALL `rifd-datascience-sa.Staging_Tables.update_watermark_with_retry`(
+    --    ['promotion_schema:promotions'],
+    --    TRUE
+    --);
 }
 
 WITH ranked AS (
