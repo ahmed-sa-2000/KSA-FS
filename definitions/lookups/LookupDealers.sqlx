@@ -21,10 +21,10 @@ pre_operations {
     );
 
     ---
-    CALL `rifd-datascience-sa.Staging_Tables.update_watermark_with_retry`(
+    /*CALL `rifd-datascience-sa.Staging_Tables.update_watermark_with_retry`(
         ['merchant_schema:dealers'],
         FALSE
-    );
+    );*/
 }
 
 post_operations {
@@ -56,10 +56,10 @@ post_operations {
 
     ---
     -- Mark watermark processing as completed
-    CALL `rifd-datascience-sa.Staging_Tables.update_watermark_with_retry`(
+    /*CALL `rifd-datascience-sa.Staging_Tables.update_watermark_with_retry`(
         ['merchant_schema:dealers'],
         TRUE
-    );
+    );*/
 }
 
 -- Main incremental model query

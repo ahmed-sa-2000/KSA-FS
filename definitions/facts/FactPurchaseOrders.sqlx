@@ -25,10 +25,12 @@ pre_operations {
     );
 
     -- Process purchaseorders staging data
+    /*
     CALL `rifd-datascience-sa.Staging_Tables.update_watermark_with_retry`(
         ['loan_schema:purchaseorders'],
         FALSE
     );
+    */
 }
 
 post_operations {
@@ -59,10 +61,12 @@ post_operations {
     `)}
 
     -- Mark staging data as processed
+    /*
     CALL `rifd-datascience-sa.Staging_Tables.update_watermark_with_retry`(
         ['loan_schema:purchaseorders'],
         TRUE
     );
+    */
 }
 
 WITH ranked AS (

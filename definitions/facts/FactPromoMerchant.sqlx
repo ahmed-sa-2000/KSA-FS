@@ -20,10 +20,12 @@ pre_operations {
     );
 
     ---
+    /*
     CALL `rifd-datascience-sa.Staging_Tables.update_watermark_with_retry`(
         ['promotion_schema:promomerchants'],
         FALSE
     );
+    */
 }
 
 post_operations {
@@ -54,10 +56,12 @@ post_operations {
     `)}
 
     ---
+    /*
     CALL `rifd-datascience-sa.Staging_Tables.update_watermark_with_retry`(
         ['promotion_schema:promomerchants'],
         TRUE
     );
+    */
 }
 
 WITH ranked AS (

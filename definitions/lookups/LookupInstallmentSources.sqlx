@@ -9,6 +9,7 @@ config {
     }
 }
 
+/*
 pre_operations {
   CALL
     `rifd-datascience-sa.Staging_Tables.update_watermark_with_retry`( ['loan_schema:installmentssourceslookups'],
@@ -20,6 +21,7 @@ post_operations {
     `rifd-datascience-sa.Staging_Tables.update_watermark_with_retry`( ['loan_schema:installmentssourceslookups'],
       TRUE )
 }
+*/
 
 SELECT
   id,
