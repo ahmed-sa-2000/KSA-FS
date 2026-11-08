@@ -2,7 +2,7 @@ config {
     type: "table",
     schema: "Lookups",
     dependencies: [
-      "assert_ext_customeraddresses_not_empty",
+      "assert_ext_CustomerAddresses_not_empty",
     ],
     bigquery: {
       clusterBy: ["id", "customer_id" , "city_id" , "region_id"]

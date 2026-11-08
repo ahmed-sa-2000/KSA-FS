@@ -54,7 +54,7 @@ assertions.assertNotEmpty("ext_questiontype");
 assertions.assertNotEmpty("ext_questioncategory");
 assertions.assertNotEmpty("ext_question");
 assertions.assertNotEmpty("ext_answeroption");
-assertions.assertNotEmpty("ext_customeraddresses");
+assertions.assertNotEmpty("ext_CustomerAddresses");
 assertions.assertNotEmpty("ext_natheerstatuslookups");
 assertions.assertNotEmpty("ext_customerstatuslookups");
 assertions.assertNotEmpty("ext_nafathstatuslookups");
