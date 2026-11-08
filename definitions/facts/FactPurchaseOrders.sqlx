@@ -93,7 +93,7 @@ SELECT
     p.merchantid AS merchant_id,
     p.branchid AS branch_id,
     p.invoicenumber AS invoice_number,
-    p.sourceid AS source_id,
+    p.sourceid AS source_code,
     src.name AS source_name,
     p.status AS status_code,
     st.name AS status_name,
@@ -112,7 +112,7 @@ SELECT
 
 FROM ranked p
     LEFT JOIN ${ref("LookupPurchaseOrderSource")} src
-        ON src.id = p.sourceid
+        ON src.code = p.sourceid
     LEFT JOIN ${ref("LookupPurchaseOrderStatus")} st
         ON st.code = p.status
 

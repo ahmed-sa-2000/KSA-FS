@@ -86,14 +86,14 @@ installment_status_stg AS (
     FROM ${ref("LookupInstallmentStatus")}
 ),
 installment_sources_stg AS (
-    SELECT id, name
+    SELECT code, name
     FROM ${ref("LookupInstallmentSources")}
 )
 
 SELECT
     i.id AS installment_id,
     i.customerid AS customer_id,
-    i.sourceid AS source_id,
+    i.sourceid AS source_code,
     isg.name AS source_name,
     i.status AS status_code,
     ist.name AS status_name,
@@ -117,6 +117,6 @@ FROM installment_stg i
 LEFT JOIN installment_status_stg ist
     ON ist.code = i.status
 LEFT JOIN installment_sources_stg isg
-    ON isg.id = i.sourceid
+    ON isg.code = i.sourceid
 WHERE i.rn = 1
   AND i.change_type IN ('INSERT', 'UPDATE-INSERT')
