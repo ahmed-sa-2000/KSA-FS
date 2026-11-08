@@ -8,7 +8,7 @@ config {
     ],
     bigquery: {
         partitionBy: "DATE(created_date)",
-        clusterBy: ["installment_id", "status"]
+        clusterBy: ["installment_id", "status_code"]
     }
 }
 
