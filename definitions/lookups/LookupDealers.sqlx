@@ -21,10 +21,10 @@ pre_operations {
     );
 
     ---
-    /*CALL `rifd-datascience-sa.Staging_Tables.update_watermark_with_retry`(
-        ['merchant_schema:dealers'],
-        FALSE
-    );*/
+    --CALL `rifd-datascience-sa.Staging_Tables.update_watermark_with_retry`(
+    --    ['merchant_schema:dealers'],
+    --    FALSE
+    -- );
 }
 
 post_operations {
