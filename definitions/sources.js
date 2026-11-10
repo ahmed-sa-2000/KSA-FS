@@ -61,7 +61,7 @@ allSources
   .forEach((table) => {
     declare({
       database: "rifd-datascience-sa",
-      schema: "Staging_Tables",
+      schema: "aman_test",
       name: table,
     });
   });

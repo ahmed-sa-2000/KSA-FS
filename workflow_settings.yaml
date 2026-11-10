@@ -1,6 +1,6 @@
 defaultProject: rifd-datascience-sa
 # default dataset should be changed to production dataset in main branch
-defaultDataset: Production_Tables
+defaultDataset: aman_test
 # default dataset should be changed to production dataset in main branch
-defaultAssertionDataset: Staging_Tables
+defaultAssertionDataset: aman_test
 dataformCoreVersion: 3.0.52
