@@ -53,9 +53,18 @@ const onboarding_db_sources = [
     "ext_nafathstatuslookups"
 ]
 
-// Combine both arrays into a single list
-const allSources = [...merchant_db_sources, ...loans_db_sources, ...promotion_db_sources, ...onboarding_db_sources];
+const credit_db_sources = [
+    "int_evaluationresponses"
+]
 
+const risk_db_sources = [
+    "int_registrationwaitlist"
+]
+
+// Combine both arrays into a single list
+const allSources = [...merchant_db_sources,  ...loans_db_sources, 
+                    ...promotion_db_sources, ...onboarding_db_sources, 
+                    ...credit_db_sources,    ...risk_db_sources];
 allSources
   .filter(Boolean) // Drops any accidental empty strings, nulls, or undefined values
   .forEach((table) => {
