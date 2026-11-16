@@ -98,4 +98,4 @@ SELECT
     CURRENT_DATETIME() AS etl_timestamp
 FROM ranked
 WHERE rn = 1
-  AND change_type IN ('INSERT', 'UPDATE-INSERT')
+  AND change_type IN ('INSERT', 'UPDATE-INSERT', 'UPDATE')

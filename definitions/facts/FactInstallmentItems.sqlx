@@ -109,4 +109,4 @@ LEFT JOIN ${ref("LookupInstallmentItemStatus")} l
 LEFT JOIN ${ref("FactInstallmentDetails")} fid
     ON fid.installmentdetails_id = i.installmentdetailsid
 WHERE i.rn = 1
-  AND i.change_type IN ('INSERT', 'UPDATE-INSERT')
+  AND i.change_type IN ('INSERT', 'UPDATE-INSERT', 'UPDATE')

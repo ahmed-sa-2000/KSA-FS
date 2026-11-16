@@ -119,4 +119,4 @@ LEFT JOIN installment_status_stg ist
 LEFT JOIN installment_sources_stg isg
     ON isg.code = i.sourceid
 WHERE i.rn = 1
-  AND i.change_type IN ('INSERT', 'UPDATE-INSERT')
+  AND i.change_type IN ('INSERT', 'UPDATE-INSERT', 'UPDATE')

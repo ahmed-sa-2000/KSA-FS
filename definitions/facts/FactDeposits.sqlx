@@ -139,4 +139,4 @@ LEFT JOIN ${ref("FactInstallmentDetails")} ids
 LEFT JOIN ${ref("LookupPaymentMethod")} pm 
     ON pm.code = d.paymentmethod
 WHERE d.rn = 1
-  AND d.change_type IN ('INSERT', 'UPDATE-INSERT')
+  AND d.change_type IN ('INSERT', 'UPDATE-INSERT', 'UPDATE')

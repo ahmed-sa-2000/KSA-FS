@@ -110,4 +110,4 @@ FROM ranked d
 LEFT JOIN ${ref("LookupInstallmentDetailsStatus")} l
     ON l.code = d.status
 WHERE d.rn = 1
-  AND d.change_type IN ('INSERT', 'UPDATE-INSERT')
+  AND d.change_type IN ('INSERT', 'UPDATE-INSERT', 'UPDATE')
