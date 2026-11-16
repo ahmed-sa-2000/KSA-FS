@@ -46,7 +46,7 @@ post_operations {
                         datastream_metadata.change_sequence_number DESC
                 ) = 1
             ) AS S
-            WHERE S.id = T.cus_id
+            WHERE S.id = T.id
               AND S.change_type IN ('DELETE', 'UPDATE-DELETE')
               AND S.change_sequence_number > T.rowversion
         );
