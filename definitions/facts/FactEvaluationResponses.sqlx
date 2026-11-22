@@ -1,0 +1,94 @@
+config {
+    type: "incremental",
+    uniqueKey: ["automation_id"],
+    onSchemaChange: "EXTEND",
+    bigquery: {
+        partitionBy: "DATE(eval_date)",
+        clusterBy: [
+            "automation_id",
+            "eval_status",
+            "customer_national_id"
+        ]
+    }
+}
+
+pre_operations {
+    -- Capture the target checkpoint before processing
+    DECLARE previous_rowversion STRING DEFAULT (
+        ${when(
+            incremental(),
+            `SELECT COALESCE(MAX(rowversion), '')
+             FROM ${self()}`,
+            `SELECT CAST('' AS STRING)`
+        )}
+    );
+}
+
+post_operations {
+    -- Delete records whose latest event in the delta is a delete
+    ${when(incremental(), `
+        DELETE FROM ${self()} AS T
+        WHERE EXISTS (
+            SELECT 1
+            FROM (
+                SELECT
+                    id,
+                    datastream_metadata.change_type AS change_type,
+                    datastream_metadata.change_sequence_number
+                        AS change_sequence_number
+                FROM ${ref("int_evaluationresponses")}
+                WHERE datastream_metadata.change_sequence_number
+                    > previous_rowversion
+                QUALIFY ROW_NUMBER() OVER (
+                    PARTITION BY id
+                    ORDER BY
+                        datastream_metadata.change_sequence_number DESC
+                ) = 1
+            ) AS S
+            WHERE S.id = T.ce_id
+              AND S.change_type IN ('DELETE', 'UPDATE-DELETE')
+              AND S.change_sequence_number > T.rowversion
+        );
+    `)}
+}
+
+WITH ranked AS (
+    SELECT
+        *,
+        datastream_metadata.change_type AS change_type,
+        datastream_metadata.change_sequence_number
+            AS change_sequence_number,
+        ROW_NUMBER() OVER (
+            PARTITION BY id
+            ORDER BY
+                datastream_metadata.change_sequence_number DESC
+        ) AS rn
+    FROM ${ref("int_evaluationresponses")}
+    ${when(incremental(), `
+        WHERE datastream_metadata.change_sequence_number
+            > previous_rowversion
+    `)}
+)
+
+SELECT
+    id AS automation_id,
+    status AS eval_status,
+    finalapprovedmaxcreditamount AS final_approved_maxcreditamount,
+    finalscore AS final_score,
+    ishardreject AS is_hard_reject,
+    rejectreasoncode AS rejectreason_code,
+    CAST(evaluatedat AS DATETIME) AS eval_date,
+    contractrequest AS eval_contractrequest,
+    response AS eval_response,
+    customermobile AS customer_mobile,
+    customernationalid AS customer_national_id,
+    freezingindays AS freezingin_days,
+    createdby AS created_by,
+    lastmodifiedby AS lastmodified_by,
+    CAST(createddate AS DATETIME) AS created_date,
+    CAST(lastmodifieddate AS DATETIME) AS lastmodified_date,
+    change_sequence_number AS rowversion,
+    CURRENT_DATETIME() AS etl_timestamp
+FROM ranked
+WHERE rn = 1
+  AND change_type IN ('INSERT', 'UPDATE-INSERT')
