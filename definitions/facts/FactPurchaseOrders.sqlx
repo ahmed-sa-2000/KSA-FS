@@ -117,4 +117,4 @@ FROM ranked p
         ON st.code = p.status
 
 WHERE p.rn = 1
-  AND p.change_type IN ('INSERT', 'UPDATE-INSERT')
+  AND p.change_type IN ('INSERT', 'UPDATE-INSERT', 'UPDATE')

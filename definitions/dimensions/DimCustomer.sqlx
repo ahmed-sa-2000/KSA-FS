@@ -170,4 +170,4 @@ FROM ranked AS c
     LEFT JOIN ${ref("LookupCustomerStatus")} AS cs
         ON cs.code = c.customerstatus
 WHERE c.rn = 1
-  AND c.change_type IN ('INSERT', 'UPDATE-INSERT')
+  AND c.change_type IN ('INSERT', 'UPDATE-INSERT', 'UPDATE')

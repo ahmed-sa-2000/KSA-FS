@@ -107,4 +107,4 @@ LEFT JOIN ${ref("DimPromotionTypes")} AS t
 LEFT JOIN ${ref("LookupPromoStage")} AS ps
     ON p.stage = ps.code
 WHERE p.rn = 1
-  AND p.change_type IN ('INSERT', 'UPDATE-INSERT')
+  AND p.change_type IN ('INSERT', 'UPDATE-INSERT', 'UPDATE')

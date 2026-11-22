@@ -94,7 +94,7 @@ merchant_roles_stg AS (
         change_sequence_number AS rowversion
     FROM ranked
     WHERE rn = 1
-      AND change_type IN ('INSERT', 'UPDATE-INSERT')
+      AND change_type IN ('INSERT', 'UPDATE-INSERT', 'UPDATE')
 ),
 merchants_stg AS (
     SELECT mu_merchantid, ds_storeid

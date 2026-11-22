@@ -101,4 +101,4 @@ FROM ranked u
 LEFT JOIN ${ref("DimDealersStores")} ds
     ON ds.ds_storecode = u.StoreCode
 WHERE u.rn = 1
-  AND u.change_type IN ('INSERT', 'UPDATE-INSERT')
+  AND u.change_type IN ('INSERT', 'UPDATE-INSERT', 'UPDATE')
